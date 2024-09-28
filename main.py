@@ -101,8 +101,9 @@ class MarkdownEditor(QWidget):
         self.css_file = css_file
     """A QWidget containing a Markdown editor with live preview."""
 
-    def __init__(self):
+    def __init__(self, css_file=None):
         super().__init__()
+        self.css_file = css_file
 
         # Create the editor and preview widgets
         self.editor = QTextEdit()
