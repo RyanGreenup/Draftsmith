@@ -142,6 +142,7 @@ class MarkdownEditor(QWidget):
                 "footnotes",
                 "md_in_html",
                 "tables",
+                "pymdownx.superfences",
                 "admonition",
                 "toc",
             ],
