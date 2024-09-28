@@ -1,0 +1,10 @@
+<style>
+  .markdown-preview {
+    width: 50%;
+    float: left;
+  }
+  .other-content {
+    width: 50%;
+    float: right;
+  }
+</style>
