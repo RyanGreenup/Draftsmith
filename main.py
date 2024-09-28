@@ -1,4 +1,5 @@
 import sys
+import argparse
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -95,6 +96,11 @@ class MarkdownHighlighter(QSyntaxHighlighter):
 class MarkdownEditor(QWidget):
     """A QWidget containing a Markdown editor with live preview."""
 
+    def __init__(self, css_file=None):
+        super().__init__()
+        self.css_file = css_file
+    """A QWidget containing a Markdown editor with live preview."""
+
     def __init__(self):
         super().__init__()
 
@@ -128,9 +134,13 @@ class MarkdownEditor(QWidget):
             text, extensions=["markdown_katex", "codehilite", "fenced_code"]
         )
 
-        # Get the CSS styles for code highlighting
+        # Get the CSS styles for code highlighting and additional CSS if provided
+        css_styles = ""
+        if self.css_file:
+            with open(self.css_file, 'r') as file:
+                css_styles += file.read()
         formatter = HtmlFormatter()
-        css_styles = formatter.get_style_defs(".codehilite")
+        css_styles += formatter.get_style_defs(".codehilite")
 
         # Build the full HTML
         html = f"""
@@ -174,11 +184,15 @@ class MainWindow(QMainWindow):
         self.resize(800, 600)
 
         # Initialize the Markdown editor
-        self.markdown_editor = MarkdownEditor()
+        self.markdown_editor = MarkdownEditor(css_file=args.css)
         self.setCentralWidget(self.markdown_editor)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Markdown Editor with Preview")
+    parser.add_argument("--css", type=str, help="Path to a CSS file for the markdown preview")
+    args = parser.parse_args()
+
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
