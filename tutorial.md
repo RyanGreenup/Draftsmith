@@ -80,6 +80,27 @@ The main execution block at the end of the script does the following:
 3. Creates and shows the `MainWindow`.
 4. Starts the application's event loop.
 
+## Code Structure
+
+To better understand the organization of the code, let's look at a structured tree representation starting from the main execution:
+
+- Main execution
+  - Parse command-line arguments
+  - Create QApplication
+  - Create MainWindow
+    - Create MarkdownEditor
+      - Create QTextEdit (editor)
+      - Create QWebEngineView (preview)
+      - Create MarkdownHighlighter
+        - Define highlighting rules
+      - Set up layout with QSplitter
+      - Connect signals (textChanged to update_preview)
+    - Set MarkdownEditor as central widget
+  - Show MainWindow
+  - Start application event loop
+
+This structure shows how the different components of the application are nested and interact with each other. The main execution creates the application and main window, which in turn creates the MarkdownEditor. The MarkdownEditor sets up the core functionality by creating the editor, preview, and highlighter components.
+
 ## Conclusion
 
 This Markdown editor with live preview demonstrates several important concepts in GUI programming with PyQt6:
@@ -90,4 +111,4 @@ This Markdown editor with live preview demonstrates several important concepts i
 4. Signal-slot connections for live updates
 5. Integration of external libraries (markdown, KaTeX)
 
-By understanding how these components work together, you can create sophisticated text editing applications with advanced features like syntax highlighting and live preview.
+By understanding how these components work together and their hierarchical structure, you can create sophisticated text editing applications with advanced features like syntax highlighting and live preview.
