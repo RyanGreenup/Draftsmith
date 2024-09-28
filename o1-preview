@@ -8,11 +8,12 @@
     float: right;
   }
   pre {
-    white-space: pre-wrap; /* Ensures that whitespace is preserved */
+    white-space: pre; /* Preserve whitespace and line breaks */
     overflow-x: auto; /* Allows horizontal scrolling for long lines */
     margin: 0; /* Removes default margin */
   }
   pre code {
     display: block; /* Ensures code block takes full width */
+    white-space: pre-wrap; /* Wraps code lines and preserves indentation */
   }
 </style>
