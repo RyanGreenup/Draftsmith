@@ -7,4 +7,7 @@
     width: 50%;
     float: right;
   }
+  pre {
+    white-space: pre-wrap; /* Ensures that whitespace is preserved */
+  }
 </style>
