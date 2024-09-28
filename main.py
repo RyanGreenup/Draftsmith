@@ -57,7 +57,7 @@ class MarkdownHighlighter(QSyntaxHighlighter):
         codeFormat.setFontFamily("Courier")
         codeFormat.setForeground(QColor("darkGreen"))
         self.highlightingRules.append((QRegularExpression("`[^`]+`"), codeFormat))
-        self.highlightingRules.append((QRegularExpression("^```.*"), codeFormat))
+        self.highlightingRules.append((QRegularExpression("^\\s*```.*"), codeFormat))
 
         # Link format
         linkFormat = QTextCharFormat()
