@@ -171,6 +171,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Markdown Editor with Preview")
+        self.resize(800, 600)
 
         # Initialize the Markdown editor
         self.markdown_editor = MarkdownEditor()
