@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QDialog,
     QDialogButtonBox,
+    QPushButton,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression
 from PyQt6.QtGui import (
@@ -16,6 +17,7 @@ from PyQt6.QtGui import (
     QTextCharFormat,
     QFont,
     QColor,
+    QPalette,
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 
@@ -96,15 +98,12 @@ class MarkdownHighlighter(QSyntaxHighlighter):
 class MarkdownEditor(QWidget):
     """A QWidget containing a Markdown editor with live preview."""
 
-    def __init__(self, css_file=None):
-        super().__init__()
-        self.css_file = css_file
-
-    """A QWidget containing a Markdown editor with live preview."""
+    dark_mode_toggled = pyqtSignal(bool)
 
     def __init__(self, css_file=None):
         super().__init__()
         self.css_file = css_file
+        self.dark_mode = False
 
         # Create the editor and preview widgets
         self.editor = QTextEdit()
@@ -119,13 +118,23 @@ class MarkdownEditor(QWidget):
         splitter.addWidget(self.preview)
         splitter.setSizes([300, 300])
 
+        # Create dark mode toggle button
+        self.dark_mode_button = QPushButton("Toggle Dark Mode")
+        self.dark_mode_button.clicked.connect(self.toggle_dark_mode)
+
         # Set up the layout
         layout = QVBoxLayout()
+        layout.addWidget(self.dark_mode_button)
         layout.addWidget(splitter)
         self.setLayout(layout)
 
         # Connect signals
         self.editor.textChanged.connect(self.update_preview)
+
+    def toggle_dark_mode(self):
+        self.dark_mode = not self.dark_mode
+        self.update_preview()
+        self.dark_mode_toggled.emit(self.dark_mode)
 
     def update_preview(self):
         """Update the Markdown preview."""
@@ -138,11 +147,11 @@ class MarkdownEditor(QWidget):
                 "markdown_katex",
                 "codehilite",
                 "fenced_code",
-                "wikilinks",
-                "footnotes",
-                "md_in_html",
                 "tables",
+                # [^2] This extension is needed for indented code blocks, like under lists
                 "pymdownx.superfences",
+                # Admonition blocks [^1]
+                "pymdownx.blocks.details",
                 "admonition",
                 "toc",
             ],
@@ -155,6 +164,22 @@ class MarkdownEditor(QWidget):
                 css_styles += file.read()
         formatter = HtmlFormatter()
         css_styles += formatter.get_style_defs(".codehilite")
+
+        # Add dark mode styles if enabled
+        if self.dark_mode:
+            dark_mode_styles = """
+            body {
+                background-color: #1e1e1e;
+                color: #d4d4d4;
+            }
+            a {
+                color: #3794ff;
+            }
+            code {
+                background-color: #2d2d2d;
+            }
+            """
+            css_styles += dark_mode_styles
 
         # Build the full HTML
         html = f"""
@@ -201,6 +226,32 @@ class MainWindow(QMainWindow):
         self.markdown_editor = MarkdownEditor(css_file=args.css)
         self.setCentralWidget(self.markdown_editor)
 
+        # Connect dark mode toggle signal
+        self.markdown_editor.dark_mode_toggled.connect(self.toggle_app_dark_mode)
+
+    def toggle_app_dark_mode(self, is_dark):
+        app = QApplication.instance()
+        if is_dark:
+            app.setStyle("Fusion")
+            palette = QPalette()
+            palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
+            palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
+            palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))
+            palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
+            palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+            palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
+            palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
+            palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
+            app.setPalette(palette)
+        else:
+            app.setStyle("Fusion")
+            app.setPalette(app.style().standardPalette())
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Markdown Editor with Preview")
@@ -213,3 +264,8 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+
+## Footnotes
+# [^1]: https://facelessuser.github.io/pymdown-extensions/extensions/blocks/plugins/details/
+# [^2]: https://github.com/mkdocs/mkdocs/issues/282
