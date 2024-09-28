@@ -99,6 +99,7 @@ class MarkdownEditor(QWidget):
     def __init__(self, css_file=None):
         super().__init__()
         self.css_file = css_file
+
     """A QWidget containing a Markdown editor with live preview."""
 
     def __init__(self, css_file=None):
@@ -132,13 +133,24 @@ class MarkdownEditor(QWidget):
 
         # Generate the markdown with extensions
         html_body = markdown.markdown(
-            text, extensions=["markdown_katex", "codehilite", "fenced_code"]
+            text,
+            extensions=[
+                "markdown_katex",
+                "codehilite",
+                "fenced_code",
+                "wikilinks",
+                "footnotes",
+                "md_in_html",
+                "tables",
+                "admonition",
+                "toc",
+            ],
         )
 
         # Get the CSS styles for code highlighting and additional CSS if provided
         css_styles = ""
         if self.css_file:
-            with open(self.css_file, 'r') as file:
+            with open(self.css_file, "r") as file:
                 css_styles += file.read()
         formatter = HtmlFormatter()
         css_styles += formatter.get_style_defs(".codehilite")
@@ -191,12 +203,12 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Markdown Editor with Preview")
-    parser.add_argument("--css", type=str, help="Path to a CSS file for the markdown preview")
+    parser.add_argument(
+        "--css", type=str, help="Path to a CSS file for the markdown preview"
+    )
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
-
-
