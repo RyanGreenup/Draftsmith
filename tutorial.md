@@ -82,24 +82,25 @@ The main execution block at the end of the script does the following:
 
 ## Code Structure
 
-To better understand the organization of the code, let's look at a structured tree representation starting from the main execution:
+To better understand the organization of the code, let's look at a structured tree representation starting from the main execution, including the names of methods or functions responsible for each list item:
 
-- Main execution
-  - Parse command-line arguments
-  - Create QApplication
-  - Create MainWindow
-    - Create MarkdownEditor
-      - Create QTextEdit (editor)
-      - Create QWebEngineView (preview)
-      - Create MarkdownHighlighter
-        - Define highlighting rules
-      - Set up layout with QSplitter
-      - Connect signals (textChanged to update_preview)
-    - Set MarkdownEditor as central widget
-  - Show MainWindow
-  - Start application event loop
+- Main execution (`if __name__ == "__main__":`)
+  - Parse command-line arguments (`argparse.ArgumentParser()`)
+  - Create QApplication (`QApplication(sys.argv)`)
+  - Create MainWindow (`MainWindow()`)
+    - Initialize the markdown editor (`__init__`)
+      - Create MarkdownEditor (`MarkdownEditor(css_file=args.css)`)
+        - Create QTextEdit (editor) (`QTextEdit()`)
+        - Create QWebEngineView (preview) (`QWebEngineView()`)
+        - Create MarkdownHighlighter (`MarkdownHighlighter(self.editor.document())`)
+          - Define highlighting rules (`__init__`)
+        - Set up layout with QSplitter (`QSplitter(Qt.Orientation.Horizontal)`)
+        - Connect signals (`textChanged.connect(self.update_preview)`)
+    - Set MarkdownEditor as central widget (`setCentralWidget()`)
+  - Show MainWindow (`window.show()`)
+  - Start application event loop (`app.exec()`)
 
-This structure shows how the different components of the application are nested and interact with each other. The main execution creates the application and main window, which in turn creates the MarkdownEditor. The MarkdownEditor sets up the core functionality by creating the editor, preview, and highlighter components.
+This structure shows how the different components of the application are nested and interact with each other. The main execution creates the application and main window, which in turn creates the MarkdownEditor. The MarkdownEditor sets up the core functionality by creating the editor, preview, and highlighter components. By including the method and function names, we can see exactly which parts of the code are responsible for each step in the application's initialization and setup.
 
 ## Conclusion
 
