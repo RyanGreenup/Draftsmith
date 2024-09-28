@@ -112,3 +112,26 @@ This Markdown editor with live preview demonstrates several important concepts i
 5. Integration of external libraries (markdown, KaTeX)
 
 By understanding how these components work together and their hierarchical structure, you can create sophisticated text editing applications with advanced features like syntax highlighting and live preview.
+
+
+Modify the tree to include the name of the method or function responsible for each list item, for example:
+
+- Main execution (`if __name__ == "__main__":`)
+  - Parse command-line arguments
+      ```python
+      app = QApplication(sys.argv)
+      ```
+  - Create QApplication
+
+      ```python
+      window = MainWindow()
+      ```
+      - Initialize the markdown editor
+
+         ```python
+         self.markdown_editor = MarkdownEditor(css_file=args.css)
+         ```
+         - `__init__`
+
+
+
