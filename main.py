@@ -96,7 +96,7 @@ class MarkdownEditor(QWidget):
         text = self.editor.toPlainText()
 
         # Convert markdown text to HTML with syntax highlighting and KaTeX math rendering
-        html_body = markdown.markdown(text, extensions=[CodeHiliteExtension(linenums=False, noclasses=True), KatexExtension()])
+        html_body = markdown.markdown(text, extensions=[CodeHiliteExtension(linenums=False, noclasses=True, guess_lang=True), KatexExtension()])
 
         # Get Pygments CSS styles for syntax highlighting
         formatter = HtmlFormatter()
