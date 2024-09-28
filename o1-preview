@@ -12,7 +12,7 @@
     overflow-x: auto; /* Allows horizontal scrolling for long lines */
     margin: 0; /* Removes default margin */
   }
-  code {
+  pre code {
     display: block; /* Ensures code block takes full width */
   }
 </style>
