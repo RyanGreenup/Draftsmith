@@ -9,5 +9,10 @@
   }
   pre {
     white-space: pre-wrap; /* Ensures that whitespace is preserved */
+    overflow-x: auto; /* Allows horizontal scrolling for long lines */
+    margin: 0; /* Removes default margin */
+  }
+  code {
+    display: block; /* Ensures code block takes full width */
   }
 </style>
