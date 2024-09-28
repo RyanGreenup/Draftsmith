@@ -4,6 +4,7 @@ from PyQt6.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
 from PyQt6.QtCore import QRegularExpression, Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 import markdown
+from pygments.formatters import HtmlFormatter
 from markdown.extensions.codehilite import CodeHiliteExtension
 
 # Import the needed extensions for markdown
