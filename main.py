@@ -109,7 +109,7 @@ class MarkdownEditor(QWidget):
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(self.editor)
         splitter.addWidget(self.preview)
-        splitter.setSizes([1, 1])
+        splitter.setSizes([300, 300])
 
         # Set up the layout
         layout = QVBoxLayout()
