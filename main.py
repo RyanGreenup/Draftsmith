@@ -1,34 +1,48 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QTextEdit, QSplitter
-from PyQt6.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
-from PyQt6.QtCore import QRegularExpression, Qt
+from PyQt6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QVBoxLayout,
+    QWidget,
+    QTextEdit,
+    QSplitter,
+    QDialog,
+    QDialogButtonBox,
+)
+from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression
+from PyQt6.QtGui import (
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QFont,
+    QColor,
+)
 from PyQt6.QtWebEngineWidgets import QWebEngineView
+
 import markdown
 from pygments.formatters import HtmlFormatter
-from markdown.extensions.codehilite import CodeHiliteExtension
-
-# Import the needed extensions for markdown
-from markdown.extensions.toc import TocExtension
-from markdown_katex import KatexExtension
 
 
 class MarkdownHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for Markdown in QTextEdit."""
+    """Syntax highlighter for Markdown code in QTextEdit."""
 
     def __init__(self, document):
         super().__init__(document)
+        # Define the highlighting rules
         self.highlightingRules = []
 
         # Heading format
         headingFormat = QTextCharFormat()
         headingFormat.setFontWeight(QFont.Weight.Bold)
         headingFormat.setForeground(QColor("blue"))
+        # Headings: lines starting with one or more '#' characters
         self.highlightingRules.append((QRegularExpression("^#{1,6} .+"), headingFormat))
 
         # Bold format
         boldFormat = QTextCharFormat()
         boldFormat.setFontWeight(QFont.Weight.Bold)
-        self.highlightingRules.append((QRegularExpression("\\*\\*(.*?)\\*\\*"), boldFormat))
+        self.highlightingRules.append(
+            (QRegularExpression("\\*\\*(.*?)\\*\\*"), boldFormat)
+        )
         self.highlightingRules.append((QRegularExpression("__(.*?)__"), boldFormat))
 
         # Italic format
@@ -47,18 +61,26 @@ class MarkdownHighlighter(QSyntaxHighlighter):
         # Link format
         linkFormat = QTextCharFormat()
         linkFormat.setForeground(QColor("darkBlue"))
-        self.highlightingRules.append((QRegularExpression("\\[.*?]\\(.*?\\)"), linkFormat))
+        self.highlightingRules.append(
+            (QRegularExpression("\\[.*?\\]\\(.*?\\)"), linkFormat)
+        )
 
         # Image format
         imageFormat = QTextCharFormat()
         imageFormat.setForeground(QColor("darkMagenta"))
-        self.highlightingRules.append((QRegularExpression("!\\[.*?]\\(.*?\\)"), imageFormat))
+        self.highlightingRules.append(
+            (QRegularExpression("!\\[.*?\\]\\(.*?\\)"), imageFormat)
+        )
 
         # List format
         listFormat = QTextCharFormat()
         listFormat.setForeground(QColor("brown"))
-        self.highlightingRules.append((QRegularExpression("^\\s*([-+*])\\s+.*"), listFormat))
-        self.highlightingRules.append((QRegularExpression("^\\s*\\d+\\.\\s+.*"), listFormat))
+        self.highlightingRules.append(
+            (QRegularExpression("^\\s*([-+*])\\s+.*"), listFormat)
+        )
+        self.highlightingRules.append(
+            (QRegularExpression("^\\s*\\d+\\.\\s+.*"), listFormat)
+        )
 
     def highlightBlock(self, text):
         for pattern, format in self.highlightingRules:
@@ -71,79 +93,94 @@ class MarkdownHighlighter(QSyntaxHighlighter):
 
 
 class MarkdownEditor(QWidget):
+    """A QWidget containing a Markdown editor with live preview."""
+
     def __init__(self):
         super().__init__()
-        self.initUI()
 
-    def initUI(self):
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-
-        self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.layout.addWidget(self.splitter)
-
+        # Create the editor and preview widgets
         self.editor = QTextEdit()
-        self.highlighter = MarkdownHighlighter(self.editor.document())
-        self.splitter.addWidget(self.editor)
-
         self.preview = QWebEngineView()
-        self.splitter.addWidget(self.preview)
 
-        self.editor.textChanged.connect(self.updatePreview)
-        self.splitter.setSizes([300, 300])
+        # Apply syntax highlighting to the editor
+        self.highlighter = MarkdownHighlighter(self.editor.document())
 
-    def updatePreview(self):
+        # Create a splitter to divide editor and preview
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.addWidget(self.editor)
+        splitter.addWidget(self.preview)
+        splitter.setSizes([1, 1])
+
+        # Set up the layout
+        layout = QVBoxLayout()
+        layout.addWidget(splitter)
+        self.setLayout(layout)
+
+        # Connect signals
+        self.editor.textChanged.connect(self.update_preview)
+
+    def update_preview(self):
+        """Update the Markdown preview."""
         text = self.editor.toPlainText()
 
-        # Convert markdown text to HTML with syntax highlighting and KaTeX math rendering
-        html_body = markdown.markdown(text, extensions=[CodeHiliteExtension(linenums=False, noclasses=True, guess_lang=True), KatexExtension()])
+        # Generate the markdown with extensions
+        html_body = markdown.markdown(
+            text, extensions=["markdown_katex", "codehilite", "fenced_code"]
+        )
 
-        # Get Pygments CSS styles for syntax highlighting
+        # Get the CSS styles for code highlighting
         formatter = HtmlFormatter()
-        css_styles = formatter.get_style_defs('.codehilite')
+        css_styles = formatter.get_style_defs(".codehilite")
 
+        # Build the full HTML
         html = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <meta charset="utf-8">
+            <meta charset="UTF-8">
             <style>
             {css_styles}
             </style>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" />
+            <!-- KaTeX CSS -->
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" crossorigin="anonymous">
         </head>
         <body>
             {html_body}
-            <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script>
+            <!-- KaTeX JS -->
+            <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js" crossorigin="anonymous"></script>
+            <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
             <script>
+            document.addEventListener("DOMContentLoaded", function() {{
                 renderMathInElement(document.body, {{
                     delimiters: [
-                        {{left: '$$', right: '$$', display: true}},
-                        {{left: '$', right: '$', display: false}}
+                      {{left: "$$", right: "$$", display: true}},
+                      {{left: "$", right: "$", display: false}}
                     ]
                 }});
+            }});
             </script>
         </body>
         </html>
         """
         self.preview.setHtml(html)
 
+
 class MainWindow(QMainWindow):
+    """Main window containing the Markdown editor."""
+
     def __init__(self):
         super().__init__()
-        self.initUI()
+        self.setWindowTitle("Markdown Editor with Preview")
 
-    def initUI(self):
-        self.setWindowTitle('Markdown Editor with Preview')
-        self.resize(800, 600)
+        # Initialize the Markdown editor
+        self.markdown_editor = MarkdownEditor()
+        self.setCentralWidget(self.markdown_editor)
 
-        self.editor = MarkdownEditor()
-        self.setCentralWidget(self.editor)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
-    mainWindow = MainWindow()
-    mainWindow.show()
+    window = MainWindow()
+    window.show()
     sys.exit(app.exec())
+
 
