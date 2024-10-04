@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QTextEdit
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QKeyEvent, QTextCursor, QColor, QTextFormat
 
+
 class VimTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -58,7 +59,6 @@ class VimTextEdit(QTextEdit):
 
             case (True, False, False, _):
                 self.handle_normal_mode(e)
-
 
     def handle_normal_mode(self, e: QKeyEvent):
         cursor = self.textCursor()
@@ -119,7 +119,6 @@ class VimTextEdit(QTextEdit):
 
         self.setTextCursor(cursor)
 
-
     def exit_visual_mode(self, cursor):
         self.visual_mode = False
         cursor.clearSelection()
@@ -156,3 +155,11 @@ class VimTextEdit(QTextEdit):
         self.insert_mode = False
         self.visual_mode = False
         self.clear_line_highlight()
+
+    def mousePressEvent(self, e):
+        super().mousePressEvent(e)
+        self.vim_mode = False
+        self.insert_mode = False
+        self.visual_mode = False
+        self.clear_line_highlight()
+
