@@ -36,55 +36,63 @@ class VimTextEdit(QTextEdit):
         self.setExtraSelections([])
 
     def keyPressEvent(self, e: QKeyEvent):
-        if not self.vim_mode:
-            if e.key() == Qt.Key.Key_Escape:
+        match (self.vim_mode, self.insert_mode, self.visual_mode, e.key()):
+            case (False, _, _, Qt.Key.Key_Escape):
                 self.vim_mode = True
                 self.insert_mode = False
                 self.visual_mode = False
                 self.update_line_highlight()
-            else:
+
+            case (False, _, _, _):
                 super().keyPressEvent(e)
-        elif self.insert_mode:
-            if e.key() == Qt.Key.Key_Escape:
+
+            case (True, True, _, Qt.Key.Key_Escape):
                 self.insert_mode = False
                 self.update_line_highlight()
-            else:
+
+            case (True, True, _, _):
                 super().keyPressEvent(e)
-        elif self.visual_mode:
-            self.handle_visual_mode(e)
-        else:
-            self.handle_normal_mode(e)
+
+            case (True, False, True, _):
+                self.handle_visual_mode(e)
+
+            case (True, False, False, _):
+                self.handle_normal_mode(e)
+
 
     def handle_normal_mode(self, e: QKeyEvent):
         cursor = self.textCursor()
-        if e.key() == Qt.Key.Key_H:
-            cursor.movePosition(QTextCursor.MoveOperation.Left)
-        elif e.key() == Qt.Key.Key_J:
-            cursor.movePosition(QTextCursor.MoveOperation.Down)
-        elif e.key() == Qt.Key.Key_K:
-            cursor.movePosition(QTextCursor.MoveOperation.Up)
-        elif e.key() == Qt.Key.Key_L:
-            cursor.movePosition(QTextCursor.MoveOperation.Right)
-        elif e.key() == Qt.Key.Key_I:
-            self.insert_mode = True
-            self.clear_line_highlight()
-        elif e.key() == Qt.Key.Key_V and not e.modifiers() & Qt.KeyboardModifier.ShiftModifier:
-            self.visual_mode = True
-            self.visual_anchor = cursor.position()
-        elif e.key() == Qt.Key.Key_V and e.modifiers() & Qt.KeyboardModifier.ShiftModifier:
-            self.visual_mode = True
-            self.select_entire_line(cursor)
-        elif e.key() == Qt.Key.Key_P:
-            self.put_text(cursor)
-        elif e.key() == Qt.Key.Key_G:
-            if self.g_pressed:
-                self.move_to_top(cursor)
+        match e.key():
+            case Qt.Key.Key_H:
+                cursor.movePosition(QTextCursor.MoveOperation.Left)
+            case Qt.Key.Key_J:
+                cursor.movePosition(QTextCursor.MoveOperation.Down)
+            case Qt.Key.Key_K:
+                cursor.movePosition(QTextCursor.MoveOperation.Up)
+            case Qt.Key.Key_L:
+                cursor.movePosition(QTextCursor.MoveOperation.Right)
+            case Qt.Key.Key_I:
+                self.insert_mode = True
+                self.clear_line_highlight()
+            case Qt.Key.Key_V:
+                if not e.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+                    self.visual_mode = True
+                    self.visual_anchor = cursor.position()
+                else:
+                    self.visual_mode = True
+                    self.select_entire_line(cursor)
+            case Qt.Key.Key_P:
+                self.put_text(cursor)
+            case Qt.Key.Key_G:
+                if self.g_pressed:
+                    self.move_to_top(cursor)
+                    self.g_pressed = False
+                else:
+                    self.move_to_bottom(cursor)
+            case _:
                 self.g_pressed = False
-            else:
-                self.move_to_bottom(cursor)
-        else:
-            self.g_pressed = False
 
+        # This separate check for Key_G ensures that the `g_pressed` state is handled correctly.
         if e.key() == Qt.Key.Key_G and not self.g_pressed:
             self.g_pressed = True
         else:
@@ -94,19 +102,23 @@ class VimTextEdit(QTextEdit):
 
     def handle_visual_mode(self, e: QKeyEvent):
         cursor = self.textCursor()
-        if e.key() == Qt.Key.Key_Escape:
-            self.exit_visual_mode(cursor)
-        elif e.key() == Qt.Key.Key_J:
-            cursor.movePosition(
-                QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.KeepAnchor
-            )
-        elif e.key() == Qt.Key.Key_K:
-            cursor.movePosition(
-                QTextCursor.MoveOperation.Up, QTextCursor.MoveMode.KeepAnchor
-            )
-        elif e.key() == Qt.Key.Key_Y:
-            self.yank_text(cursor)
+
+        match e.key():
+            case Qt.Key.Key_Escape:
+                self.exit_visual_mode(cursor)
+            case Qt.Key.Key_J:
+                cursor.movePosition(
+                    QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.KeepAnchor
+                )
+            case Qt.Key.Key_K:
+                cursor.movePosition(
+                    QTextCursor.MoveOperation.Up, QTextCursor.MoveMode.KeepAnchor
+                )
+            case Qt.Key.Key_Y:
+                self.yank_text(cursor)
+
         self.setTextCursor(cursor)
+
 
     def exit_visual_mode(self, cursor):
         self.visual_mode = False
