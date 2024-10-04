@@ -337,10 +337,12 @@ class Markdown:
 
 class PreviewAction(QAction):
     def __init__(self, markdown_editor):
-        super().__init__(QIcon("icons/magnifier.png"), "Toggle Preview", markdown_editor)
+        super().__init__(
+            QIcon("icons/magnifier.png"), "Toggle Preview", markdown_editor
+        )
         self.setStatusTip("Toggle Side by Side Preview")
         self.triggered.connect(markdown_editor.toggle_preview)
-        self.setShortcut("Alt+P")
+        self.setShortcut("Alt+G")
         self.setCheckable(True)
 
 
@@ -350,6 +352,15 @@ class DarkModeAction(QAction):
         self.setStatusTip("Toggle Side by Side Preview")
         self.triggered.connect(main_window.toggle_app_dark_mode)
         self.setShortcut("Alt+D")
+        self.setCheckable(True)
+
+
+class OverlayPreviewAction(QAction):
+    def __init__(self, markdown_editor):
+        super().__init__(QIcon("icons/acorn.png"), "Overlay Preview", markdown_editor)
+        self.setStatusTip("Replace Editor with Preview")
+        self.triggered.connect(markdown_editor.toggle_preview_overlay)
+        self.setShortcut("Alt+O")
         self.setCheckable(True)
 
 
@@ -382,16 +393,24 @@ class MainWindow(QMainWindow):
         # Create a Toolbar
         self.create_toolbar()
 
-
     def create_toolbar(self):
         # Create a Toolbar
         toolbar = QToolBar("Main Toolbar")
         toolbar.setIconSize(QSize(16, 16))
 
-        preview_button = PreviewAction(self.markdown_editor)
-        darkmode_action = DarkModeAction(self)
-        toolbar.addAction(preview_button)
-        toolbar.addAction(darkmode_action)
+        actions = {
+            "view": {
+                "darkmode": DarkModeAction(self),
+                "preview": PreviewAction(self.markdown_editor),
+                "overlay": OverlayPreviewAction(self.markdown_editor),
+            },
+        }
+        # preview_button = PreviewAction(self.markdown_editor)
+        # darkmode_action = DarkModeAction(self)
+        # overlay_preview_action = OverlayPreviewAction(self.markdown_editor)
+
+        for action in actions["view"].values():
+            toolbar.addAction(action)
 
         # Fill the Toolbar
         self.addToolBar(toolbar)
@@ -402,8 +421,8 @@ class MainWindow(QMainWindow):
             file_menu = menu.addMenu("File")
             view_menu = menu.addMenu("View")
             if view_menu:
-                view_menu.addAction(preview_button)
-                view_menu.addAction(darkmode_action)
+                for action in actions["view"].values():
+                    view_menu.addAction(action)
 
     def toggle_app_dark_mode(self, is_dark):
         """
