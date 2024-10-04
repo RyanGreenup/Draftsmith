@@ -1,3 +1,7 @@
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from pygments.formatters import HtmlFormatter
+import markdown
+from pathlib import Path
 import sys
 import argparse
 from PyQt6.QtWidgets import (
@@ -7,8 +11,6 @@ from PyQt6.QtWidgets import (
     QWidget,
     QTextEdit,
     QSplitter,
-    QDialog,
-    QDialogButtonBox,
     QPushButton,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression
@@ -20,7 +22,11 @@ from PyQt6.QtGui import (
     QPalette,
 )
 
+
 def get_dark_palette():
+    """
+    Return a QPalette with a dark color scheme.
+    """
     dark_palette = QPalette()
     dark_palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
     dark_palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
@@ -36,10 +42,6 @@ def get_dark_palette():
     dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
     dark_palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
     return dark_palette
-from PyQt6.QtWebEngineWidgets import QWebEngineView
-
-import markdown
-from pygments.formatters import HtmlFormatter
 
 
 class MarkdownHighlighter(QSyntaxHighlighter):
@@ -126,12 +128,8 @@ class DarkModeButton(QPushButton):
         self.dark_mode_toggled.emit(self.dark_mode)
 
 
-
-
 class MarkdownEditor(QWidget):
     """A QWidget containing a Markdown editor with live preview."""
-
-    dark_mode_toggled = pyqtSignal(bool)
 
     def __init__(self, css_file=None):
         super().__init__()
@@ -163,7 +161,6 @@ class MarkdownEditor(QWidget):
         # Connect signals
         self.editor.textChanged.connect(self.update_preview)
 
-
     def update_preview(self):
         """Update the Markdown preview."""
         text = self.editor.toPlainText()
@@ -186,6 +183,12 @@ class MarkdownEditor(QWidget):
         )
 
         # Get the CSS styles for code highlighting and additional CSS if provided
+        css_styles = self.build_css(self.css_file)
+        # Build the full HTML
+        html = self.build_html(html_body, css_styles)
+        self.preview.setHtml(html)
+
+    def build_css(self, css_file: Path | None = None):
         css_styles = ""
         if self.css_file:
             with open(self.css_file, "r") as file:
@@ -208,8 +211,9 @@ class MarkdownEditor(QWidget):
             }
             """
             css_styles += dark_mode_styles
+        return css_styles
 
-        # Build the full HTML
+    def build_html(self, html_body, css_styles):
         html = f"""
         <!DOCTYPE html>
         <html>
@@ -239,7 +243,7 @@ class MarkdownEditor(QWidget):
         </body>
         </html>
         """
-        self.preview.setHtml(html)
+        return html
 
 
 class MainWindow(QMainWindow):
@@ -266,6 +270,9 @@ class MainWindow(QMainWindow):
         self.dark_mode_button.dark_mode_toggled.connect(self.toggle_app_dark_mode)
 
     def toggle_app_dark_mode(self, is_dark):
+        """
+        Toggle the dark mode of the application.
+        """
         app = QApplication.instance()
         if is_dark:
             app.setStyle("Fusion")
@@ -273,11 +280,10 @@ class MainWindow(QMainWindow):
         else:
             app.setStyle("Fusion")
             app.setPalette(app.style().standardPalette())
-        
+
         # Update the markdown editor's dark mode
         self.markdown_editor.dark_mode = is_dark
         self.markdown_editor.update_preview()
-
 
 
 if __name__ == "__main__":
@@ -293,6 +299,6 @@ if __name__ == "__main__":
     sys.exit(app.exec())
 
 
-## Footnotes
+# Footnotes
 # [^1]: https://facelessuser.github.io/pymdown-extensions/extensions/blocks/plugins/details/
 # [^2]: https://github.com/mkdocs/mkdocs/issues/282
