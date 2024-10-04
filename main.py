@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QTextEdit
-from PyQt6.QtGui import QKeyEvent, QTextCursor, QKeySequence
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QTextEdit, QToolBar
+from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from vimkeys import VimTextEdit
 from pygments.formatters import HtmlFormatter
@@ -135,11 +135,6 @@ class DarkModeButton(QPushButton):
         self.dark_mode_toggled.emit(self.dark_mode)
 
 
-
-
-
-
-
 class MarkdownEditor(QWidget):
     """A QWidget containing a Markdown editor with toggleable live preview."""
 
@@ -155,6 +150,9 @@ class MarkdownEditor(QWidget):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
         self.preview = QWebEngineView()
+        # These buttons are included only as an exemplar, probably
+        # Use the toolbar instead as it deals with the actions
+        # and Keyboard shortcuts
         self.button = QPushButton("Hide Preview (Ctrl+P)")
         self.button.clicked.connect(self.toggle_preview)
 
@@ -217,7 +215,9 @@ class MarkdownEditor(QWidget):
         """Update the Markdown preview."""
         if self.preview_visible or self.preview_overlay:
             text = self.editor.toPlainText()
-            markdown_content = Markdown(text=text, css_path=self.css_file, dark_mode=self.dark_mode)
+            markdown_content = Markdown(
+                text=text, css_path=self.css_file, dark_mode=self.dark_mode
+            )
             self.preview.setHtml(markdown_content.build_html())
 
 
@@ -244,12 +244,12 @@ class Markdown:
                 "toc",
             ],
             extension_configs={
-                'codehilite': {
-                    'css_class': 'highlight',
-                    'linenums': False,
-                    'guess_lang': False
+                "codehilite": {
+                    "css_class": "highlight",
+                    "linenums": False,
+                    "guess_lang": False,
                 }
-            }
+            },
         )
 
         return html_body
@@ -259,14 +259,16 @@ class Markdown:
         if self.css_path:
             with open(self.css_path, "r") as file:
                 css_styles += file.read()
-        
+
         # Add Pygments CSS for code highlighting
-        formatter = HtmlFormatter(style='default' if not self.dark_mode else 'monokai')
-        pygments_css = formatter.get_style_defs('.highlight')
-        
+        formatter = HtmlFormatter(style="default" if not self.dark_mode else "monokai")
+        pygments_css = formatter.get_style_defs(".highlight")
+
         # Modify Pygments CSS for dark mode
         if self.dark_mode:
-            pygments_css = pygments_css.replace('background: #f8f8f8', 'background: #2d2d2d')
+            pygments_css = pygments_css.replace(
+                "background: #f8f8f8", "background: #2d2d2d"
+            )
             pygments_css += """
             .highlight {
                 background-color: #2d2d2d;
@@ -278,7 +280,7 @@ class Markdown:
                 background-color: #2d2d2d;
             }
             """
-        
+
         css_styles += pygments_css
 
         # Add dark mode styles if enabled
@@ -333,6 +335,24 @@ class Markdown:
         return html
 
 
+class PreviewAction(QAction):
+    def __init__(self, markdown_editor):
+        super().__init__(QIcon("icons/magnifier.png"), "Toggle Preview", markdown_editor)
+        self.setStatusTip("Toggle Side by Side Preview")
+        self.triggered.connect(markdown_editor.toggle_preview)
+        self.setShortcut("Alt+P")
+        self.setCheckable(True)
+
+
+class DarkModeAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon("icons/lightning.png"), "Dark Mode", main_window)
+        self.setStatusTip("Toggle Side by Side Preview")
+        self.triggered.connect(main_window.toggle_app_dark_mode)
+        self.setShortcut("Alt+D")
+        self.setCheckable(True)
+
+
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
 
@@ -359,6 +379,32 @@ class MainWindow(QMainWindow):
         # Setup shortcuts
         self.setup_shortcuts()
 
+        # Create a Toolbar
+        self.create_toolbar()
+
+
+    def create_toolbar(self):
+        # Create a Toolbar
+        toolbar = QToolBar("Main Toolbar")
+        toolbar.setIconSize(QSize(16, 16))
+
+        preview_button = PreviewAction(self.markdown_editor)
+        darkmode_action = DarkModeAction(self)
+        toolbar.addAction(preview_button)
+        toolbar.addAction(darkmode_action)
+
+        # Fill the Toolbar
+        self.addToolBar(toolbar)
+
+        # Add a Menu
+        menu = self.menuBar()
+        if menu:
+            file_menu = menu.addMenu("File")
+            view_menu = menu.addMenu("View")
+            if view_menu:
+                view_menu.addAction(preview_button)
+                view_menu.addAction(darkmode_action)
+
     def toggle_app_dark_mode(self, is_dark):
         """
         Toggle the dark mode of the application.
@@ -382,11 +428,15 @@ class MainWindow(QMainWindow):
 
         # Toggle Overlay Preview shortcut
         toggle_overlay_shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
-        toggle_overlay_shortcut.activated.connect(self.markdown_editor.toggle_preview_overlay)
+        toggle_overlay_shortcut.activated.connect(
+            self.markdown_editor.toggle_preview_overlay
+        )
 
         # Toggle Dark Mode shortcut
         toggle_dark_mode_shortcut = QShortcut(QKeySequence("Ctrl+D"), self)
-        toggle_dark_mode_shortcut.activated.connect(self.dark_mode_button.toggle_dark_mode)
+        toggle_dark_mode_shortcut.activated.connect(
+            self.dark_mode_button.toggle_dark_mode
+        )
 
 
 if __name__ == "__main__":
