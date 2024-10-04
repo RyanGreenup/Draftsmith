@@ -275,7 +275,12 @@ class MarkdownEditor(QWidget):
 
     def toggle_preview_overlay(self):
         if self.overlay_button.isChecked():
-            self.main_layout.replaceWidget(self.editor, self.preview)
+            self.editor.hide()
+            self.preview.show()
+        else:
+            self.editor.show()
+            if self.preview_visible:
+                self.preview.show()
 
     def update_preview(self):
         """Update the Markdown preview."""
