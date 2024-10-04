@@ -16,7 +16,6 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QPushButton,
     QTextEdit,
-    QShortcut,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression
 from PyQt6.QtGui import (
@@ -26,6 +25,7 @@ from PyQt6.QtGui import (
     QColor,
     QPalette,
     QKeyEvent,
+    QShortcut,
 )
 
 
@@ -224,6 +224,7 @@ class MarkdownEditor(QWidget):
         self.css_file = css_file
         self.dark_mode = False
         self.preview_visible = True
+        self.preview_overlay = False
         self.setup_ui()
 
     def setup_ui(self):
@@ -276,17 +277,21 @@ class MarkdownEditor(QWidget):
 
     def toggle_preview_overlay(self):
         # TODO, the preview needs to be initialized or something because of the flickering issue
-        if self.overlay_button.isChecked():
+        if self.preview_overlay:
             self.editor.hide()
+            self.update_preview()
             self.preview.show()
         else:
             self.editor.show()
             if self.preview_visible:
                 self.preview.show()
 
+        self.preview_overlay = not self.preview_overlay
+        self.overlay_button.setChecked(self.preview_overlay)
+
     def update_preview(self):
         """Update the Markdown preview."""
-        if self.preview_visible:
+        if self.preview_visible or self.preview_overlay:
             text = self.editor.toPlainText()
             markdown_content = Markdown(text=text, dark_mode=self.dark_mode)
             self.preview.setHtml(markdown_content.build_html())
