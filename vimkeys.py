@@ -16,6 +16,7 @@ class VimTextEdit(QTextEdit):
         self.visual_mode = False
         self.visual_anchor = None
         self.yanked_text = ""
+        self.g_pressed = False  # Add this line to track 'g' key press
 
     def keyPressEvent(self, e: QKeyEvent):
         if not self.vim_mode:
@@ -61,7 +62,19 @@ class VimTextEdit(QTextEdit):
             self.select_entire_line(cursor)
         elif e.key() == Qt.Key.Key_P:
             self.put_text(cursor)
-        self.setTextCursor(cursor)
+        elif e.key() == Qt.Key.Key_G:
+            if self.g_pressed:
+                self.move_to_top(cursor)
+                self.g_pressed = False
+            else:
+                self.move_to_bottom(cursor)
+        else:
+            self.g_pressed = False
+
+        if e.key() == Qt.Key.Key_G and not self.g_pressed:
+            self.g_pressed = True
+        else:
+            self.setTextCursor(cursor)
 
     def handle_visual_mode(self, e: QKeyEvent):
         cursor = self.textCursor()
@@ -100,6 +113,14 @@ class VimTextEdit(QTextEdit):
         self.setTextCursor(
             cursor
         )  # Set the cursor to reflect the entire line selection.
+
+    def move_to_top(self, cursor):
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        self.setTextCursor(cursor)
+
+    def move_to_bottom(self, cursor):
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        self.setTextCursor(cursor)
 
     def mousePressEvent(self, e):
         super().mousePressEvent(e)
