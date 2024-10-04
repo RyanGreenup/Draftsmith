@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QTextEdit
-from PyQt6.QtGui import QKeyEvent, QTextCursor
+from PyQt6.QtGui import QKeyEvent, QTextCursor, QKeySequence
 from PyQt6.QtCore import Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from pygments.formatters import HtmlFormatter
@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QPushButton,
     QTextEdit,
+    QShortcut,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression
 from PyQt6.QtGui import (
@@ -123,7 +124,7 @@ class DarkModeButton(QPushButton):
     dark_mode_toggled = pyqtSignal(bool)
 
     def __init__(self):
-        super().__init__("Toggle Dark Mode")
+        super().__init__("Toggle Dark Mode (Ctrl+D)")
         self.setCheckable(True)
         self.clicked.connect(self.toggle_dark_mode)
         self.dark_mode = False
@@ -229,10 +230,10 @@ class MarkdownEditor(QWidget):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
         self.preview = QWebEngineView()
-        self.button = QPushButton("Hide Preview")
+        self.button = QPushButton("Hide Preview (Ctrl+P)")
         self.button.clicked.connect(self.toggle_preview)
 
-        self.overlay_button = QPushButton("Overlay Preview")
+        self.overlay_button = QPushButton("Overlay Preview (Ctrl+O)")
         self.overlay_button.setCheckable(True)
         self.overlay_button.clicked.connect(self.toggle_preview_overlay)
 
@@ -265,12 +266,12 @@ class MarkdownEditor(QWidget):
         self.preview_visible = not self.preview_visible
         if self.preview_visible:
             self.preview.show()
-            self.button.setText("Hide Preview")
+            self.button.setText("Hide Preview (Ctrl+P)")
             self.splitter.setSizes([300, 300])
             self.update_preview()
         else:
             self.preview.hide()
-            self.button.setText("Show Preview")
+            self.button.setText("Show Preview (Ctrl+P)")
             self.splitter.setSizes([600, 0])
 
     def toggle_preview_overlay(self):
@@ -400,25 +401,10 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.markdown_editor)
 
         # Connect dark mode toggle signal
+        self.dark_mode_button.dark_mode_toggled.connect(self.toggle_app_dark_mode)
 
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Markdown Editor with Preview")
-        self.resize(800, 600)
-
-        # Initialize the Markdown editor
-        self.markdown_editor = MarkdownEditor(css_file=args.css)
-        # Initialize the dark mode button
-        self.dark_mode_button = DarkModeButton()
-
-        # Set the Central Widget and Layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        self.main_layout = QVBoxLayout(central_widget)
-        self.main_layout.addWidget(self.dark_mode_button)
-        self.main_layout.addWidget(self.markdown_editor)
-
-        # Connect dark mode toggle signal
+        # Setup shortcuts
+        self.setup_shortcuts()
 
     def toggle_app_dark_mode(self, is_dark):
         """
@@ -435,6 +421,19 @@ class MainWindow(QMainWindow):
         # Update the markdown editor's dark mode
         self.markdown_editor.dark_mode = is_dark
         self.markdown_editor.update_preview()
+
+    def setup_shortcuts(self):
+        # Toggle Preview shortcut
+        toggle_preview_shortcut = QShortcut(QKeySequence("Ctrl+P"), self)
+        toggle_preview_shortcut.activated.connect(self.markdown_editor.toggle_preview)
+
+        # Toggle Overlay Preview shortcut
+        toggle_overlay_shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
+        toggle_overlay_shortcut.activated.connect(self.markdown_editor.toggle_preview_overlay)
+
+        # Toggle Dark Mode shortcut
+        toggle_dark_mode_shortcut = QShortcut(QKeySequence("Ctrl+D"), self)
+        toggle_dark_mode_shortcut.activated.connect(self.dark_mode_button.toggle_dark_mode)
 
 
 if __name__ == "__main__":
