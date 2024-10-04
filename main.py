@@ -149,10 +149,6 @@ class MarkdownEditor(QWidget):
         splitter.addWidget(self.preview)
         splitter.setSizes([300, 300])
 
-        # # Create dark mode toggle button
-        # self.dark_mode_button = QPushButton("Toggle Dark Mode")
-        # self.dark_mode_button.clicked.connect(self.toggle_dark_mode)
-
         # Set up the layout
         layout = QVBoxLayout()
         layout.addWidget(splitter)
@@ -165,9 +161,20 @@ class MarkdownEditor(QWidget):
         """Update the Markdown preview."""
         text = self.editor.toPlainText()
 
+        markdown_content = Markdown(text=text, dark_mode=self.dark_mode)
+        self.preview.setHtml(markdown_content.build_html())
+
+
+class Markdown():
+    def __init__(self, text: str, css_path: Path | None = None, dark_mode: bool = False):
+        self.css_path = css_path
+        self.text = text
+        self.dark_mode = dark_mode
+
+    def make_html(self) -> str:
         # Generate the markdown with extensions
         html_body = markdown.markdown(
-            text,
+            self.text,
             extensions=[
                 "markdown_katex",
                 "codehilite",
@@ -182,16 +189,12 @@ class MarkdownEditor(QWidget):
             ],
         )
 
-        # Get the CSS styles for code highlighting and additional CSS if provided
-        css_styles = self.build_css(self.css_file)
-        # Build the full HTML
-        html = self.build_html(html_body, css_styles)
-        self.preview.setHtml(html)
+        return html_body
 
-    def build_css(self, css_file: Path | None = None):
+    def build_css(self, css_file: Path | None = None) -> str:
         css_styles = ""
-        if self.css_file:
-            with open(self.css_file, "r") as file:
+        if css_file:
+            with open(css_file, "r") as file:
                 css_styles += file.read()
         formatter = HtmlFormatter()
         css_styles += formatter.get_style_defs(".codehilite")
@@ -213,7 +216,9 @@ class MarkdownEditor(QWidget):
             css_styles += dark_mode_styles
         return css_styles
 
-    def build_html(self, html_body, css_styles):
+    def build_html(self) -> str:
+        html_body = self.make_html()
+        css_styles = self.build_css()
         html = f"""
         <!DOCTYPE html>
         <html>
