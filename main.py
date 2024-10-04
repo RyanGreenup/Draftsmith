@@ -165,8 +165,10 @@ class MarkdownEditor(QWidget):
         self.preview.setHtml(markdown_content.build_html())
 
 
-class Markdown():
-    def __init__(self, text: str, css_path: Path | None = None, dark_mode: bool = False):
+class Markdown:
+    def __init__(
+        self, text: str, css_path: Path | None = None, dark_mode: bool = False
+    ):
         self.css_path = css_path
         self.text = text
         self.dark_mode = dark_mode
