@@ -95,6 +95,46 @@ class MarkdownHighlighter(QSyntaxHighlighter):
                 self.setFormat(index, length, format)
 
 
+class DarkModeButton(QPushButton):
+    def __init__(self):
+        super().__init__("Toggle Dark Mode")
+        self.clicked.connect(self.toggle_dark_mode)
+        self.setCheckable(True)
+        self.clicked.connect(self.toggle_dark_mode)
+        self.dark_mode = False
+
+    def toggle_dark_mode(self):
+        self.dark_mode = not self.dark_mode
+        # TODO think about this one
+        # self.update_preview()
+        r self.dark_mode_toggled.emit(self.dark_mode)
+
+    def toggle_app_dark_mode(self, is_dark):
+        app = QApplication.instance()
+        if is_dark:
+            app.setStyle("Fusion")
+            palette = QPalette()
+            palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
+            palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
+            palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))
+            palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
+            palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+            palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
+            palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
+            palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
+            app.setPalette(palette)
+        else:
+            app.setStyle("Fusion")
+            app.setPalette(app.style().standardPalette())
+
+
+
+
 class MarkdownEditor(QWidget):
     """A QWidget containing a Markdown editor with live preview."""
 
@@ -118,23 +158,18 @@ class MarkdownEditor(QWidget):
         splitter.addWidget(self.preview)
         splitter.setSizes([300, 300])
 
-        # Create dark mode toggle button
-        self.dark_mode_button = QPushButton("Toggle Dark Mode")
-        self.dark_mode_button.clicked.connect(self.toggle_dark_mode)
+        # # Create dark mode toggle button
+        # self.dark_mode_button = QPushButton("Toggle Dark Mode")
+        # self.dark_mode_button.clicked.connect(self.toggle_dark_mode)
 
         # Set up the layout
         layout = QVBoxLayout()
-        layout.addWidget(self.dark_mode_button)
         layout.addWidget(splitter)
         self.setLayout(layout)
 
         # Connect signals
         self.editor.textChanged.connect(self.update_preview)
 
-    def toggle_dark_mode(self):
-        self.dark_mode = not self.dark_mode
-        self.update_preview()
-        self.dark_mode_toggled.emit(self.dark_mode)
 
     def update_preview(self):
         """Update the Markdown preview."""
@@ -224,33 +259,20 @@ class MainWindow(QMainWindow):
 
         # Initialize the Markdown editor
         self.markdown_editor = MarkdownEditor(css_file=args.css)
-        self.setCentralWidget(self.markdown_editor)
+        # Initialize the dark mode button
+        self.dark_mode_button = DarkModeButton()
 
-        # Connect dark mode toggle signal
-        self.markdown_editor.dark_mode_toggled.connect(self.toggle_app_dark_mode)
+        # Set the Central Widget and Layout
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        self.main_layout = QVBoxLayout(central_widget)
+        self.main_layout.addWidget(self.dark_mode_button)
+        self.main_layout.addWidget(self.markdown_editor)
 
-    def toggle_app_dark_mode(self, is_dark):
-        app = QApplication.instance()
-        if is_dark:
-            app.setStyle("Fusion")
-            palette = QPalette()
-            palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
-            palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
-            palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))
-            palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
-            palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
-            palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
-            palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
-            palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
-            app.setPalette(palette)
-        else:
-            app.setStyle("Fusion")
-            app.setPalette(app.style().standardPalette())
+        # TODO
+        # # Connect dark mode toggle signal
+        # self.markdown_editor.dark_mode_toggled.connect(self.toggle_app_dark_mode)
+
 
 
 if __name__ == "__main__":
