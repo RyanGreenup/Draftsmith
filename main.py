@@ -1,3 +1,6 @@
+from PyQt6.QtWidgets import QTextEdit
+from PyQt6.QtGui import QKeyEvent, QTextCursor
+from PyQt6.QtCore import Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from pygments.formatters import HtmlFormatter
 import markdown
@@ -12,6 +15,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QSplitter,
     QPushButton,
+    QTextEdit,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression
 from PyQt6.QtGui import (
@@ -20,6 +24,7 @@ from PyQt6.QtGui import (
     QFont,
     QColor,
     QPalette,
+    QKeyEvent,
 )
 
 
@@ -128,6 +133,33 @@ class DarkModeButton(QPushButton):
         self.dark_mode_toggled.emit(self.dark_mode)
 
 
+class VimTextEdit(QTextEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.vim_mode = False
+
+    def keyPressEvent(self, e: QKeyEvent):
+        if self.vim_mode:
+            if e.key() == Qt.Key.Key_Escape:
+                self.vim_mode = False
+            elif e.key() == Qt.Key.Key_H:
+                self.moveCursor(QTextCursor.MoveOperation.Left)
+            elif e.key() == Qt.Key.Key_J:
+                self.moveCursor(QTextCursor.MoveOperation.Down)
+            elif e.key() == Qt.Key.Key_K:
+                self.moveCursor(QTextCursor.MoveOperation.Up)
+            elif e.key() == Qt.Key.Key_L:
+                self.moveCursor(QTextCursor.MoveOperation.Right)
+            elif e.key() == Qt.Key.Key_I:
+                self.vim_mode = False
+            # Add more Vim-like behaviors here.
+        else:
+            if e.key() == Qt.Key.Key_Escape:
+                self.vim_mode = True
+            else:
+                super().keyPressEvent(e)
+
+
 class MarkdownEditor(QWidget):
     """A QWidget containing a Markdown editor with live preview."""
 
@@ -137,7 +169,7 @@ class MarkdownEditor(QWidget):
         self.dark_mode = False
 
         # Create the editor and preview widgets
-        self.editor = QTextEdit()
+        self.editor = VimTextEdit()
         self.preview = QWebEngineView()
 
         # Apply syntax highlighting to the editor
