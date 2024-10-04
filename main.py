@@ -137,27 +137,61 @@ class VimTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.vim_mode = False
+        self.insert_mode = False
+        self.visual_mode = False
+        self.visual_anchor = None
 
     def keyPressEvent(self, e: QKeyEvent):
-        if self.vim_mode:
-            if e.key() == Qt.Key.Key_Escape:
-                self.vim_mode = False
-            elif e.key() == Qt.Key.Key_H:
-                self.moveCursor(QTextCursor.MoveOperation.Left)
-            elif e.key() == Qt.Key.Key_J:
-                self.moveCursor(QTextCursor.MoveOperation.Down)
-            elif e.key() == Qt.Key.Key_K:
-                self.moveCursor(QTextCursor.MoveOperation.Up)
-            elif e.key() == Qt.Key.Key_L:
-                self.moveCursor(QTextCursor.MoveOperation.Right)
-            elif e.key() == Qt.Key.Key_I:
-                self.vim_mode = False
-            # Add more Vim-like behaviors here.
-        else:
+        if not self.vim_mode:
             if e.key() == Qt.Key.Key_Escape:
                 self.vim_mode = True
+                self.insert_mode = False
+                self.visual_mode = False
             else:
                 super().keyPressEvent(e)
+        elif self.insert_mode:
+            if e.key() == Qt.Key.Key_Escape:
+                self.insert_mode = False
+            else:
+                super().keyPressEvent(e)
+        elif self.visual_mode:
+            self.handle_visual_mode(e)
+        else:
+            self.handle_normal_mode(e)
+
+    def handle_normal_mode(self, e: QKeyEvent):
+        cursor = self.textCursor()
+        if e.key() == Qt.Key.Key_H:
+            cursor.movePosition(QTextCursor.MoveOperation.Left)
+        elif e.key() == Qt.Key.Key_J:
+            cursor.movePosition(QTextCursor.MoveOperation.Down)
+        elif e.key() == Qt.Key.Key_K:
+            cursor.movePosition(QTextCursor.MoveOperation.Up)
+        elif e.key() == Qt.Key.Key_L:
+            cursor.movePosition(QTextCursor.MoveOperation.Right)
+        elif e.key() == Qt.Key.Key_I:
+            self.insert_mode = True
+        elif e.key() == Qt.Key.Key_V:
+            self.visual_mode = True
+            self.visual_anchor = cursor.position()
+        self.setTextCursor(cursor)
+
+    def handle_visual_mode(self, e: QKeyEvent):
+        cursor = self.textCursor()
+        if e.key() == Qt.Key.Key_Escape:
+            self.visual_mode = False
+            cursor.clearSelection()
+        elif e.key() == Qt.Key.Key_J:
+            cursor.movePosition(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.KeepAnchor)
+        elif e.key() == Qt.Key.Key_K:
+            cursor.movePosition(QTextCursor.MoveOperation.Up, QTextCursor.MoveMode.KeepAnchor)
+        self.setTextCursor(cursor)
+
+    def mousePressEvent(self, e):
+        super().mousePressEvent(e)
+        self.vim_mode = False
+        self.insert_mode = False
+        self.visual_mode = False
 
 
 class MarkdownEditor(QWidget):
