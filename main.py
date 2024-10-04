@@ -223,12 +223,18 @@ class MarkdownEditor(QWidget):
         self.css_file = css_file
         self.dark_mode = False
         self.preview_visible = True
+        self.setup_ui()
 
+    def setup_ui(self):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
         self.preview = QWebEngineView()
         self.button = QPushButton("Hide Preview")
         self.button.clicked.connect(self.toggle_preview)
+
+        self.overlay_button = QPushButton("Overlay Preview")
+        self.overlay_button.setCheckable(True)
+        self.overlay_button.clicked.connect(self.toggle_preview_overlay)
 
         # Create a splitter to divide editor and preview
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -236,18 +242,21 @@ class MarkdownEditor(QWidget):
         self.splitter.addWidget(self.preview)
         self.splitter.setSizes([300, 300])
 
+        # Setup the layout
+        self.main_layout = QVBoxLayout()
+
         # Build the layout
         self.build_layout()
 
         # Apply syntax highlighting to the editor
         self.highlighter = MarkdownHighlighter(self.editor.document())
 
-        # Connect signals
+        # Connect the Editor with the Preview
         self.editor.textChanged.connect(self.update_preview)
 
     def build_layout(self):
-        # Set up the layout
-        self.main_layout = QVBoxLayout()
+        # Todo put these side by side
+        self.main_layout.addWidget(self.overlay_button)
         self.main_layout.addWidget(self.button)
         self.main_layout.addWidget(self.splitter)
         self.setLayout(self.main_layout)
@@ -263,6 +272,10 @@ class MarkdownEditor(QWidget):
             self.preview.hide()
             self.button.setText("Show Preview")
             self.splitter.setSizes([600, 0])
+
+    def toggle_preview_overlay(self):
+        if self.overlay_button.isChecked():
+            self.main_layout.replaceWidget(self.editor, self.preview)
 
     def update_preview(self):
         """Update the Markdown preview."""
@@ -381,6 +394,7 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.markdown_editor)
 
         # Connect dark mode toggle signal
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Markdown Editor with Preview")
@@ -399,7 +413,6 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.markdown_editor)
 
         # Connect dark mode toggle signal
-
 
     def toggle_app_dark_mode(self, is_dark):
         """
@@ -421,7 +434,7 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Markdown Editor with Preview")
     parser.add_argument(
-        "--css", type = str, help = "Path to a CSS file for the markdown preview"
+        "--css", type=str, help="Path to a CSS file for the markdown preview"
     )
     args = parser.parse_args()
 
