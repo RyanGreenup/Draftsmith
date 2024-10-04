@@ -1,12 +1,6 @@
 from PyQt6.QtWidgets import QTextEdit
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
-    QTextEdit,
-    QTextEdit,
-)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QKeyEvent, QTextCursor
-
+from PyQt6.QtGui import QKeyEvent, QTextCursor, QColor, QTextFormat
 
 class VimTextEdit(QTextEdit):
     def __init__(self, parent=None):
@@ -16,7 +10,30 @@ class VimTextEdit(QTextEdit):
         self.visual_mode = False
         self.visual_anchor = None
         self.yanked_text = ""
-        self.g_pressed = False  # Add this line to track 'g' key press
+        self.g_pressed = False
+        self.cursorPositionChanged.connect(self.update_line_highlight)
+
+    def update_line_highlight(self):
+        if self.vim_mode and not self.insert_mode:
+            self.highlight_current_line()
+        else:
+            self.clear_line_highlight()
+
+    def highlight_current_line(self):
+        extra_selections = []
+        if not self.isReadOnly():
+            selection = QTextEdit.ExtraSelection()
+            line_color = QColor(Qt.GlobalColor.yellow)
+            line_color.setAlpha(40)  # Set transparency
+            selection.format.setBackground(line_color)
+            selection.format.setProperty(QTextFormat.Property.FullWidthSelection, True)
+            selection.cursor = self.textCursor()
+            selection.cursor.clearSelection()
+            extra_selections.append(selection)
+        self.setExtraSelections(extra_selections)
+
+    def clear_line_highlight(self):
+        self.setExtraSelections([])
 
     def keyPressEvent(self, e: QKeyEvent):
         if not self.vim_mode:
@@ -24,11 +41,13 @@ class VimTextEdit(QTextEdit):
                 self.vim_mode = True
                 self.insert_mode = False
                 self.visual_mode = False
+                self.update_line_highlight()
             else:
                 super().keyPressEvent(e)
         elif self.insert_mode:
             if e.key() == Qt.Key.Key_Escape:
                 self.insert_mode = False
+                self.update_line_highlight()
             else:
                 super().keyPressEvent(e)
         elif self.visual_mode:
@@ -48,16 +67,11 @@ class VimTextEdit(QTextEdit):
             cursor.movePosition(QTextCursor.MoveOperation.Right)
         elif e.key() == Qt.Key.Key_I:
             self.insert_mode = True
-        elif (
-            e.key() == Qt.Key.Key_V
-            and not e.modifiers() & Qt.KeyboardModifier.ShiftModifier
-        ):
+            self.clear_line_highlight()
+        elif e.key() == Qt.Key.Key_V and not e.modifiers() & Qt.KeyboardModifier.ShiftModifier:
             self.visual_mode = True
             self.visual_anchor = cursor.position()
-        elif (
-            e.key() == Qt.Key.Key_V
-            and e.modifiers() & Qt.KeyboardModifier.ShiftModifier
-        ):
+        elif e.key() == Qt.Key.Key_V and e.modifiers() & Qt.KeyboardModifier.ShiftModifier:
             self.visual_mode = True
             self.select_entire_line(cursor)
         elif e.key() == Qt.Key.Key_P:
@@ -75,6 +89,8 @@ class VimTextEdit(QTextEdit):
             self.g_pressed = True
         else:
             self.setTextCursor(cursor)
+
+        self.update_line_highlight()
 
     def handle_visual_mode(self, e: QKeyEvent):
         cursor = self.textCursor()
@@ -127,3 +143,4 @@ class VimTextEdit(QTextEdit):
         self.vim_mode = False
         self.insert_mode = False
         self.visual_mode = False
+        self.clear_line_highlight()
