@@ -217,7 +217,7 @@ class MarkdownEditor(QWidget):
         """Update the Markdown preview."""
         if self.preview_visible or self.preview_overlay:
             text = self.editor.toPlainText()
-            markdown_content = Markdown(text=text, dark_mode=self.dark_mode)
+            markdown_content = Markdown(text=text, css_path=self.css_file, dark_mode=self.dark_mode)
             self.preview.setHtml(markdown_content.build_html())
 
 
@@ -238,24 +238,31 @@ class Markdown:
                 "codehilite",
                 "fenced_code",
                 "tables",
-                # [^2] This extension is needed for indented code blocks, like under lists
                 "pymdownx.superfences",
-                # Admonition blocks [^1]
                 "pymdownx.blocks.details",
                 "admonition",
                 "toc",
             ],
+            extension_configs={
+                'codehilite': {
+                    'css_class': 'highlight',
+                    'linenums': False,
+                    'guess_lang': False
+                }
+            }
         )
 
         return html_body
 
-    def build_css(self, css_file: Path | None = None) -> str:
+    def build_css(self) -> str:
         css_styles = ""
-        if css_file:
-            with open(css_file, "r") as file:
+        if self.css_path:
+            with open(self.css_path, "r") as file:
                 css_styles += file.read()
-        formatter = HtmlFormatter()
-        css_styles += formatter.get_style_defs(".codehilite")
+        
+        # Add Pygments CSS for code highlighting
+        formatter = HtmlFormatter(style='default' if not self.dark_mode else 'monokai')
+        css_styles += formatter.get_style_defs('.highlight')
 
         # Add dark mode styles if enabled
         if self.dark_mode:
