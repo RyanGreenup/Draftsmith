@@ -274,6 +274,7 @@ class MarkdownEditor(QWidget):
             self.splitter.setSizes([600, 0])
 
     def toggle_preview_overlay(self):
+        # TODO, the preview needs to be initialized or something because of the flickering issue
         if self.overlay_button.isChecked():
             self.editor.hide()
             self.preview.show()
