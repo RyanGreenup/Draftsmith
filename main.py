@@ -262,7 +262,24 @@ class Markdown:
         
         # Add Pygments CSS for code highlighting
         formatter = HtmlFormatter(style='default' if not self.dark_mode else 'monokai')
-        css_styles += formatter.get_style_defs('.highlight')
+        pygments_css = formatter.get_style_defs('.highlight')
+        
+        # Modify Pygments CSS for dark mode
+        if self.dark_mode:
+            pygments_css = pygments_css.replace('background: #f8f8f8', 'background: #2d2d2d')
+            pygments_css += """
+            .highlight {
+                background-color: #2d2d2d;
+            }
+            .highlight pre {
+                background-color: #2d2d2d;
+            }
+            .highlight .hll {
+                background-color: #2d2d2d;
+            }
+            """
+        
+        css_styles += pygments_css
 
         # Add dark mode styles if enabled
         if self.dark_mode:
