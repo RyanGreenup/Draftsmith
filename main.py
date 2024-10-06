@@ -312,13 +312,13 @@ class MainWindow(QMainWindow):
         # Initialize autosave
         self.autosave_timer = QTimer(self)
         self.autosave_timer.timeout.connect(self.autosave)
-        self.autosave_interval = 60000  # 1 minute in milliseconds
+        self.autosave_interval = 500  # 1 second in milliseconds
         self.autosave_enabled = False
 
     def open_file(self, file_path=None):
         if not file_path:
             file_path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Markdown Files (*.md);;All Files (*)")
-        
+
         if file_path:
             file = QFile(file_path)
             if file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text):
@@ -334,10 +334,10 @@ class MainWindow(QMainWindow):
             if not file_path:
                 return  # User cancelled the save dialog
             self.current_file = file_path
-        
+
         with open(self.current_file, 'w', encoding='utf-8') as file:
             file.write(self.markdown_editor.editor.toPlainText())
-        
+
         self.setWindowTitle(f"Markdown Editor - {os.path.basename(self.current_file)}")
 
     def toggle_autosave(self):
@@ -441,10 +441,10 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     window = MainWindow()
-    
+
     if args.input_file:
         window.open_file(args.input_file)
-    
+
     window.show()
     sys.exit(app.exec())
 
