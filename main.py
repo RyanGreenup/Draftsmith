@@ -288,6 +288,14 @@ class AutoSaveAction(QAction):
         self.setShortcut("Ctrl+Shift+A")
         self.setCheckable(True)
 
+class AutoRevertAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon("icons/arrow-circle-315-frame.png"), "Toggle AutoRevert", main_window)
+        self.setStatusTip("Toggle automatic reloading from disk")
+        self.triggered.connect(main_window.toggle_autorevert)
+        self.setShortcut("Ctrl+Shift+R")
+        self.setCheckable(True)
+
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
 
@@ -324,18 +332,42 @@ class MainWindow(QMainWindow):
         self.autosave_enabled = False
         self.autosave_action = None  # We'll set this in create_toolbar
 
+        # Initialize autorevert
+        self.autorevert_timer = QTimer(self)
+        self.autorevert_timer.timeout.connect(self.autorevert)
+        self.autorevert_enabled = False
+        self.autorevert_action = None  # We'll set this in create_toolbar
+
     def open_file(self, file_path=None):
         if not file_path:
             file_path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Markdown Files (*.md);;All Files (*)")
 
         if file_path:
-            file = QFile(file_path)
-            if file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text):
-                stream = QTextStream(file)
-                self.markdown_editor.editor.setPlainText(stream.readAll())
-                file.close()
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    content = file.read()
+                self.markdown_editor.editor.setPlainText(content)
                 self.current_file = file_path
                 self.setWindowTitle(f"Markdown Editor - {os.path.basename(file_path)}")
+            except Exception as e:
+                QMessageBox.warning(self, 'Error', f"Failed to open file: {str(e)}")
+
+    def toggle_autorevert(self):
+        self.autorevert_enabled = not self.autorevert_enabled
+        if self.autorevert_enabled:
+            self.autorevert_timer.start(self.autosave_interval)
+        else:
+            self.autorevert_timer.stop()
+        
+        # Update the AutoRevert action state
+        if self.autorevert_action:
+            self.autorevert_action.setChecked(self.autorevert_enabled)
+
+    def autorevert(self):
+        if hasattr(self, 'current_file'):
+            self.open_file(self.current_file)
+        else:
+            print("No file to autorevert")  # You might want to handle this case differently
 
     def save_file(self):
         if not hasattr(self, 'current_file'):
@@ -390,6 +422,7 @@ class MainWindow(QMainWindow):
             },
             "edit": {
                 "autosave": AutoSaveAction(self),
+                "autorevert": AutoRevertAction(self),
             },
             "view": {
                 "darkmode": DarkModeAction(self),
@@ -425,8 +458,9 @@ class MainWindow(QMainWindow):
             for action in actions["view"].values():
                 view_menu.addAction(action)
 
-        # Store the AutoSave action for later use
+        # Store the AutoSave and AutoRevert actions for later use
         self.autosave_action = actions["edit"]["autosave"]
+        self.autorevert_action = actions["edit"]["autorevert"]
 
     def toggle_app_dark_mode(self, is_dark):
         """
