@@ -314,6 +314,7 @@ class MainWindow(QMainWindow):
         self.autosave_timer.timeout.connect(self.autosave)
         self.autosave_interval = 500  # 1 second in milliseconds
         self.autosave_enabled = False
+        self.autosave_action = None  # We'll set this in create_toolbar
 
     def open_file(self, file_path=None):
         if not file_path:
@@ -346,6 +347,10 @@ class MainWindow(QMainWindow):
             self.autosave_timer.start(self.autosave_interval)
         else:
             self.autosave_timer.stop()
+        
+        # Update the AutoSave action state
+        if self.autosave_action:
+            self.autosave_action.setChecked(self.autosave_enabled)
 
     def autosave(self):
         if hasattr(self, 'current_file'):
@@ -400,6 +405,9 @@ class MainWindow(QMainWindow):
             for action in actions["view"].values():
                 view_menu.addAction(action)
 
+        # Store the AutoSave action for later use
+        self.autosave_action = actions["edit"]["autosave"]
+
     def toggle_app_dark_mode(self, is_dark):
         """
         Toggle the dark mode of the application.
@@ -437,6 +445,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "input_file", nargs="?", help="Path to the markdown file to open"
     )
+    parser.add_argument(
+        "--autosave", action="store_true", help="Start with autosave enabled"
+    )
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
@@ -444,6 +455,9 @@ if __name__ == "__main__":
 
     if args.input_file:
         window.open_file(args.input_file)
+
+    if args.autosave:
+        window.toggle_autosave()
 
     window.show()
     sys.exit(app.exec())
