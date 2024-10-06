@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QFileDialog,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression, QFile, QTextStream
+from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression, QFile, QTextStream, QTimer
 from PyQt6.QtGui import (
     QSyntaxHighlighter,
     QTextCharFormat,
@@ -272,6 +272,14 @@ class SaveAction(QAction):
         self.triggered.connect(main_window.save_file)
         self.setShortcut("Ctrl+S")
 
+class AutoSaveAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon("icons/clock-arrow.png"), "Toggle AutoSave", main_window)
+        self.setStatusTip("Toggle automatic saving")
+        self.triggered.connect(main_window.toggle_autosave)
+        self.setShortcut("Ctrl+Shift+A")
+        self.setCheckable(True)
+
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
 
@@ -301,6 +309,12 @@ class MainWindow(QMainWindow):
         # Create a Toolbar
         self.create_toolbar()
 
+        # Initialize autosave
+        self.autosave_timer = QTimer(self)
+        self.autosave_timer.timeout.connect(self.autosave)
+        self.autosave_interval = 60000  # 1 minute in milliseconds
+        self.autosave_enabled = False
+
     def open_file(self, file_path=None):
         if not file_path:
             file_path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Markdown Files (*.md);;All Files (*)")
@@ -318,13 +332,26 @@ class MainWindow(QMainWindow):
         if not hasattr(self, 'current_file'):
             file_path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Markdown Files (*.md);;All Files (*)")
             if not file_path:
-                return
+                return  # User cancelled the save dialog
             self.current_file = file_path
         
         with open(self.current_file, 'w', encoding='utf-8') as file:
             file.write(self.markdown_editor.editor.toPlainText())
         
         self.setWindowTitle(f"Markdown Editor - {os.path.basename(self.current_file)}")
+
+    def toggle_autosave(self):
+        self.autosave_enabled = not self.autosave_enabled
+        if self.autosave_enabled:
+            self.autosave_timer.start(self.autosave_interval)
+        else:
+            self.autosave_timer.stop()
+
+    def autosave(self):
+        if hasattr(self, 'current_file'):
+            self.save_file()
+        else:
+            print("No file to autosave")  # You might want to handle this case differently
 
     def create_toolbar(self):
         # Create a Toolbar
@@ -335,6 +362,9 @@ class MainWindow(QMainWindow):
             "file": {
                 "open": OpenAction(self),
                 "save": SaveAction(self),
+            },
+            "edit": {
+                "autosave": AutoSaveAction(self),
             },
             "view": {
                 "darkmode": DarkModeAction(self),
@@ -363,10 +393,12 @@ class MainWindow(QMainWindow):
             file_menu = menu.addMenu("File")
             for action in actions["file"].values():
                 file_menu.addAction(action)
+            edit_menu = menu.addMenu("Edit")
+            for action in actions["edit"].values():
+                edit_menu.addAction(action)
             view_menu = menu.addMenu("View")
-            if view_menu:
-                for action in actions["view"].values():
-                    view_menu.addAction(action)
+            for action in actions["view"].values():
+                view_menu.addAction(action)
 
     def toggle_app_dark_mode(self, is_dark):
         """
