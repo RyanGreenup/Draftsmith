@@ -61,11 +61,15 @@ class MarkdownHighlighter(QSyntaxHighlighter):
         self.highlightingRules = []
 
         # Heading format
-        headingFormat = QTextCharFormat()
-        headingFormat.setFontWeight(QFont.Weight.Bold)
-        headingFormat.setForeground(QColor("blue"))
-        # Headings: lines starting with one or more '#' characters
-        self.highlightingRules.append((QRegularExpression("^#{1,6} .+"), headingFormat))
+        for i in range(1, 7):
+            headingFormat = QTextCharFormat()
+            headingFormat.setFontWeight(QFont.Weight.Bold)
+            headingFormat.setForeground(QColor("blue"))
+            headingFormat.setFontPointSize(24 - i * 2)
+            hashes = "#" * i
+            self.highlightingRules.append(
+                (QRegularExpression(f"^{hashes} .+"), headingFormat)
+            )
 
         # Bold format
         boldFormat = QTextCharFormat()
