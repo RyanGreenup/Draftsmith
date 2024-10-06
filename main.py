@@ -303,6 +303,12 @@ class Markdown:
     def build_html(self) -> str:
         html_body = self.make_html()
         css_styles = self.build_css()
+
+        # Add dark mode styles for KaTeX
+        katex_dark_mode_styles = """
+        .katex { color: #d4d4d4; }
+        """ if self.dark_mode else ""
+
         html = f"""
         <!DOCTYPE html>
         <html>
@@ -310,13 +316,12 @@ class Markdown:
             <meta charset="UTF-8">
             <style>
             {css_styles}
+            {katex_dark_mode_styles}
             </style>
-            <!-- KaTeX CSS -->
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" crossorigin="anonymous">
         </head>
         <body>
             {html_body}
-            <!-- KaTeX JS -->
             <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js" crossorigin="anonymous"></script>
             <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
             <script>
@@ -438,6 +443,7 @@ class MainWindow(QMainWindow):
 
         # Update the markdown editor's dark mode
         self.markdown_editor.dark_mode = is_dark
+        self.markdown_editor.editor.set_dark_mode(is_dark)
         self.markdown_editor.update_preview()
 
     def setup_shortcuts(self):
