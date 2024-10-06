@@ -1,3 +1,4 @@
+import os
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
 from markdown_utils import Markdown
@@ -261,7 +262,7 @@ class OpenAction(QAction):
     def __init__(self, main_window):
         super().__init__(QIcon("icons/folder-open.png"), "Open", main_window)
         self.setStatusTip("Open a markdown file")
-        self.triggered.connect(main_window.open_file)
+        self.triggered.connect(lambda: main_window.open_file(None))
         self.setShortcut("Ctrl+O")
 
 
@@ -294,15 +295,17 @@ class MainWindow(QMainWindow):
         # Create a Toolbar
         self.create_toolbar()
 
-    def open_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Markdown Files (*.md);;All Files (*)")
-        if file_name:
-            file = QFile(file_name)
+    def open_file(self, file_path=None):
+        if not file_path:
+            file_path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Markdown Files (*.md);;All Files (*)")
+        
+        if file_path:
+            file = QFile(file_path)
             if file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text):
                 stream = QTextStream(file)
                 self.markdown_editor.editor.setPlainText(stream.readAll())
                 file.close()
-                self.setWindowTitle(f"Markdown Editor - {file_name}")
+                self.setWindowTitle(f"Markdown Editor - {os.path.basename(file_path)}")
 
     def create_toolbar(self):
         # Create a Toolbar
@@ -379,10 +382,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--css", type=str, help="Path to a CSS file for the markdown preview"
     )
+    parser.add_argument(
+        "input_file", nargs="?", help="Path to the markdown file to open"
+    )
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
     window = MainWindow()
+    
+    if args.input_file:
+        window.open_file(args.input_file)
+    
     window.show()
     sys.exit(app.exec())
 
