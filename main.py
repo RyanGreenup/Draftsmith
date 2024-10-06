@@ -18,8 +18,9 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QPushButton,
     QTextEdit,
+    QFileDialog,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression
+from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression, QFile, QTextStream
 from PyQt6.QtGui import (
     QSyntaxHighlighter,
     QTextCharFormat,
@@ -256,6 +257,14 @@ class OverlayPreviewAction(QAction):
         self.setCheckable(True)
 
 
+class OpenAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon("icons/folder-open.png"), "Open", main_window)
+        self.setStatusTip("Open a markdown file")
+        self.triggered.connect(main_window.open_file)
+        self.setShortcut("Ctrl+O")
+
+
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
 
@@ -285,22 +294,40 @@ class MainWindow(QMainWindow):
         # Create a Toolbar
         self.create_toolbar()
 
+    def open_file(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Markdown Files (*.md);;All Files (*)")
+        if file_name:
+            file = QFile(file_name)
+            if file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text):
+                stream = QTextStream(file)
+                self.markdown_editor.editor.setPlainText(stream.readAll())
+                file.close()
+                self.setWindowTitle(f"Markdown Editor - {file_name}")
+
     def create_toolbar(self):
         # Create a Toolbar
         toolbar = QToolBar("Main Toolbar")
         toolbar.setIconSize(QSize(16, 16))
 
         actions = {
+            "file": {
+                "open": OpenAction(self),
+            },
             "view": {
                 "darkmode": DarkModeAction(self),
                 "preview": PreviewAction(self.markdown_editor),
                 "overlay": OverlayPreviewAction(self.markdown_editor),
             },
         }
-        # preview_button = PreviewAction(self.markdown_editor)
-        # darkmode_action = DarkModeAction(self)
-        # overlay_preview_action = OverlayPreviewAction(self.markdown_editor)
 
+        # Add File actions to toolbar
+        for action in actions["file"].values():
+            toolbar.addAction(action)
+
+        # Add a separator
+        toolbar.addSeparator()
+
+        # Add View actions to toolbar
         for action in actions["view"].values():
             toolbar.addAction(action)
 
@@ -311,6 +338,8 @@ class MainWindow(QMainWindow):
         menu = self.menuBar()
         if menu:
             file_menu = menu.addMenu("File")
+            for action in actions["file"].values():
+                file_menu.addAction(action)
             view_menu = menu.addMenu("View")
             if view_menu:
                 for action in actions["view"].values():
@@ -337,12 +366,6 @@ class MainWindow(QMainWindow):
         # Toggle Preview shortcut
         toggle_preview_shortcut = QShortcut(QKeySequence("Ctrl+P"), self)
         toggle_preview_shortcut.activated.connect(self.markdown_editor.toggle_preview)
-
-        # Toggle Overlay Preview shortcut
-        toggle_overlay_shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
-        toggle_overlay_shortcut.activated.connect(
-            self.markdown_editor.toggle_preview_overlay
-        )
 
         # Toggle Dark Mode shortcut
         toggle_dark_mode_shortcut = QShortcut(QKeySequence("Ctrl+D"), self)
