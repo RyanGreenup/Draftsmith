@@ -265,6 +265,12 @@ class OpenAction(QAction):
         self.triggered.connect(lambda: main_window.open_file(None))
         self.setShortcut("Ctrl+O")
 
+class SaveAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon("icons/disk.png"), "Save", main_window)
+        self.setStatusTip("Save the current file")
+        self.triggered.connect(main_window.save_file)
+        self.setShortcut("Ctrl+S")
 
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
@@ -305,7 +311,20 @@ class MainWindow(QMainWindow):
                 stream = QTextStream(file)
                 self.markdown_editor.editor.setPlainText(stream.readAll())
                 file.close()
+                self.current_file = file_path
                 self.setWindowTitle(f"Markdown Editor - {os.path.basename(file_path)}")
+
+    def save_file(self):
+        if not hasattr(self, 'current_file'):
+            file_path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Markdown Files (*.md);;All Files (*)")
+            if not file_path:
+                return
+            self.current_file = file_path
+        
+        with open(self.current_file, 'w', encoding='utf-8') as file:
+            file.write(self.markdown_editor.editor.toPlainText())
+        
+        self.setWindowTitle(f"Markdown Editor - {os.path.basename(self.current_file)}")
 
     def create_toolbar(self):
         # Create a Toolbar
@@ -315,6 +334,7 @@ class MainWindow(QMainWindow):
         actions = {
             "file": {
                 "open": OpenAction(self),
+                "save": SaveAction(self),
             },
             "view": {
                 "darkmode": DarkModeAction(self),
