@@ -358,7 +358,7 @@ class MainWindow(QMainWindow):
             self.autorevert_timer.start(self.autosave_interval)
         else:
             self.autorevert_timer.stop()
-        
+
         # Update the AutoRevert action state
         if self.autorevert_action:
             self.autorevert_action.setChecked(self.autorevert_enabled)
@@ -398,7 +398,7 @@ class MainWindow(QMainWindow):
             self.autosave_timer.start(self.autosave_interval)
         else:
             self.autosave_timer.stop()
-        
+
         # Update the AutoSave action state
         if self.autosave_action:
             self.autosave_action.setChecked(self.autosave_enabled)
