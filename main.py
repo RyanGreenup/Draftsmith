@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QTextEdit,
     QFileDialog,
+    QMessageBox,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression, QFile, QTextStream, QTimer
 from PyQt6.QtGui import (
@@ -272,6 +273,13 @@ class SaveAction(QAction):
         self.triggered.connect(main_window.save_file)
         self.setShortcut("Ctrl+S")
 
+class RevertToDiskAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon("icons/arrow-circle-315.png"), "Revert to Disk", main_window)
+        self.setStatusTip("Reload the current file from disk")
+        self.triggered.connect(main_window.revert_to_disk)
+        self.setShortcut("Ctrl+R")
+
 class AutoSaveAction(QAction):
     def __init__(self, main_window):
         super().__init__(QIcon("icons/clock-arrow.png"), "Toggle AutoSave", main_window)
@@ -341,6 +349,17 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle(f"Markdown Editor - {os.path.basename(self.current_file)}")
 
+    def revert_to_disk(self):
+        if hasattr(self, 'current_file'):
+            reply = QMessageBox.question(self, 'Revert to Disk',
+                                         "Are you sure you want to revert to the saved version? All unsaved changes will be lost.",
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
+                self.open_file(self.current_file)
+        else:
+            QMessageBox.warning(self, 'Revert to Disk', "No file is currently open.")
+
     def toggle_autosave(self):
         self.autosave_enabled = not self.autosave_enabled
         if self.autosave_enabled:
@@ -367,6 +386,7 @@ class MainWindow(QMainWindow):
             "file": {
                 "open": OpenAction(self),
                 "save": SaveAction(self),
+                "revert": RevertToDiskAction(self),
             },
             "edit": {
                 "autosave": AutoSaveAction(self),
