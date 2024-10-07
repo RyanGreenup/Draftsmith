@@ -1,7 +1,6 @@
 import os
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
-from PyQt6.QtWidgets import QShortcut
 from markdown_utils import Markdown
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
@@ -376,11 +375,11 @@ class MainWindow(QMainWindow):
     def new_tab(self):
         # Create a new MarkdownEditor
         markdown_editor = MarkdownEditor(css_file=args.css)
-        
+
         # Add the new MarkdownEditor to a new tab
         tab_title = f"Untitled {self.tab_widget.count() + 1}"
         self.tab_widget.addTab(markdown_editor, tab_title)
-        
+
         # Set the new tab as the current tab
         self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
 
@@ -392,15 +391,15 @@ class MainWindow(QMainWindow):
             try:
                 with open(file_path, 'r', encoding='utf-8') as file:
                     content = file.read()
-                
+
                 # Get the current tab's MarkdownEditor
                 current_editor = self.tab_widget.currentWidget()
-                
+
                 # If there's no current tab or the current tab is not empty, create a new tab
                 if not current_editor or current_editor.editor.toPlainText().strip():
                     self.new_tab()
                     current_editor = self.tab_widget.currentWidget()
-                
+
                 current_editor.editor.setPlainText(content)
                 self.tab_widget.setTabText(self.tab_widget.currentIndex(), os.path.basename(file_path))
                 self.current_file = file_path
