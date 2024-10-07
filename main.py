@@ -1,6 +1,7 @@
 import os
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
+from PyQt6.QtWidgets import QShortcut
 from markdown_utils import Markdown
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
@@ -304,6 +305,20 @@ class AutoRevertAction(QAction):
         self.setShortcut("Ctrl+Shift+R")
         self.setCheckable(True)
 
+class PreviousTabAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon("icons/arrow-180.png"), "Previous Tab", main_window)
+        self.setStatusTip("Switch to the previous tab")
+        self.triggered.connect(main_window.previous_tab)
+        self.setShortcut("Ctrl+[")
+
+class NextTabAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon("icons/arrow.png"), "Next Tab", main_window)
+        self.setStatusTip("Switch to the next tab")
+        self.triggered.connect(main_window.next_tab)
+        self.setShortcut("Ctrl+]")
+
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
 
@@ -343,6 +358,20 @@ class MainWindow(QMainWindow):
         self.autorevert_timer.timeout.connect(self.autorevert)
         self.autorevert_enabled = False
         self.autorevert_action = None  # We'll set this in create_toolbar
+
+    def previous_tab(self):
+        current_index = self.tab_widget.currentIndex()
+        if current_index > 0:
+            self.tab_widget.setCurrentIndex(current_index - 1)
+        else:
+            self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
+
+    def next_tab(self):
+        current_index = self.tab_widget.currentIndex()
+        if current_index < self.tab_widget.count() - 1:
+            self.tab_widget.setCurrentIndex(current_index + 1)
+        else:
+            self.tab_widget.setCurrentIndex(0)
 
     def new_tab(self):
         # Create a new MarkdownEditor
@@ -461,6 +490,8 @@ class MainWindow(QMainWindow):
                 "darkmode": DarkModeAction(self),
                 "preview": PreviewAction(self.tab_widget.currentWidget() if self.tab_widget.count() > 0 else None),
                 "overlay": OverlayPreviewAction(self.tab_widget.currentWidget() if self.tab_widget.count() > 0 else None),
+                "previous_tab": PreviousTabAction(self),
+                "next_tab": NextTabAction(self),
             },
         }
 
@@ -474,6 +505,10 @@ class MainWindow(QMainWindow):
         # Add View actions to toolbar
         for action in actions["view"].values():
             toolbar.addAction(action)
+
+        # Add tab navigation actions to toolbar
+        toolbar.addAction(actions["view"]["previous_tab"])
+        toolbar.addAction(actions["view"]["next_tab"])
 
         # Fill the Toolbar
         self.addToolBar(toolbar)
