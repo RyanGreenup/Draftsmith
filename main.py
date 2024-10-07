@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QFileDialog,
     QMessageBox,
+    QTabWidget,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression, QFile, QTextStream, QTimer
 from PyQt6.QtGui import (
@@ -259,6 +260,13 @@ class OverlayPreviewAction(QAction):
         self.setCheckable(True)
 
 
+class NewTabAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon("icons/tab--plus.png"), "New Tab", main_window)
+        self.setStatusTip("Open a new tab")
+        self.triggered.connect(main_window.new_tab)
+        self.setShortcut("Ctrl+T")
+
 class OpenAction(QAction):
     def __init__(self, main_window):
         super().__init__(QIcon("icons/folder-open.png"), "Open", main_window)
@@ -304,17 +312,15 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Markdown Editor with Preview")
         self.resize(800, 600)
 
-        # Initialize the Markdown editor
-        self.markdown_editor = MarkdownEditor(css_file=args.css)
+        # Create a QTabWidget
+        self.tab_widget = QTabWidget()
+        self.setCentralWidget(self.tab_widget)
+
+        # Create the first tab
+        self.new_tab()
+
         # Initialize the dark mode button
         self.dark_mode_button = DarkModeButton()
-
-        # Set the Central Widget and Layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        self.main_layout = QVBoxLayout(central_widget)
-        self.main_layout.addWidget(self.dark_mode_button)
-        self.main_layout.addWidget(self.markdown_editor)
 
         # Connect dark mode toggle signal
         self.dark_mode_button.dark_mode_toggled.connect(self.toggle_app_dark_mode)
@@ -338,6 +344,17 @@ class MainWindow(QMainWindow):
         self.autorevert_enabled = False
         self.autorevert_action = None  # We'll set this in create_toolbar
 
+    def new_tab(self):
+        # Create a new MarkdownEditor
+        markdown_editor = MarkdownEditor(css_file=args.css)
+        
+        # Add the new MarkdownEditor to a new tab
+        tab_title = f"Untitled {self.tab_widget.count() + 1}"
+        self.tab_widget.addTab(markdown_editor, tab_title)
+        
+        # Set the new tab as the current tab
+        self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
+
     def open_file(self, file_path=None):
         if not file_path:
             file_path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Markdown Files (*.md);;All Files (*)")
@@ -346,7 +363,17 @@ class MainWindow(QMainWindow):
             try:
                 with open(file_path, 'r', encoding='utf-8') as file:
                     content = file.read()
-                self.markdown_editor.editor.setPlainText(content)
+                
+                # Get the current tab's MarkdownEditor
+                current_editor = self.tab_widget.currentWidget()
+                
+                # If there's no current tab or the current tab is not empty, create a new tab
+                if not current_editor or current_editor.editor.toPlainText().strip():
+                    self.new_tab()
+                    current_editor = self.tab_widget.currentWidget()
+                
+                current_editor.editor.setPlainText(content)
+                self.tab_widget.setTabText(self.tab_widget.currentIndex(), os.path.basename(file_path))
                 self.current_file = file_path
                 self.setWindowTitle(f"Markdown Editor - {os.path.basename(file_path)}")
             except Exception as e:
@@ -370,6 +397,10 @@ class MainWindow(QMainWindow):
             print("No file to autorevert")  # You might want to handle this case differently
 
     def save_file(self):
+        current_editor = self.tab_widget.currentWidget()
+        if not current_editor:
+            return
+
         if not hasattr(self, 'current_file'):
             file_path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Markdown Files (*.md);;All Files (*)")
             if not file_path:
@@ -377,8 +408,9 @@ class MainWindow(QMainWindow):
             self.current_file = file_path
 
         with open(self.current_file, 'w', encoding='utf-8') as file:
-            file.write(self.markdown_editor.editor.toPlainText())
+            file.write(current_editor.editor.toPlainText())
 
+        self.tab_widget.setTabText(self.tab_widget.currentIndex(), os.path.basename(self.current_file))
         self.setWindowTitle(f"Markdown Editor - {os.path.basename(self.current_file)}")
 
     def revert_to_disk(self):
@@ -416,6 +448,7 @@ class MainWindow(QMainWindow):
 
         actions = {
             "file": {
+                "new_tab": NewTabAction(self),
                 "open": OpenAction(self),
                 "save": SaveAction(self),
                 "revert": RevertToDiskAction(self),
@@ -426,8 +459,8 @@ class MainWindow(QMainWindow):
             },
             "view": {
                 "darkmode": DarkModeAction(self),
-                "preview": PreviewAction(self.markdown_editor),
-                "overlay": OverlayPreviewAction(self.markdown_editor),
+                "preview": PreviewAction(self.tab_widget.currentWidget() if self.tab_widget.count() > 0 else None),
+                "overlay": OverlayPreviewAction(self.tab_widget.currentWidget() if self.tab_widget.count() > 0 else None),
             },
         }
 
@@ -474,21 +507,28 @@ class MainWindow(QMainWindow):
             app.setStyle("Fusion")
             app.setPalette(app.style().standardPalette())
 
-        # Update the markdown editor's dark mode
-        self.markdown_editor.dark_mode = is_dark
-        self.markdown_editor.editor.set_dark_mode(is_dark)
-        self.markdown_editor.update_preview()
+        # Update the markdown editor's dark mode for all tabs
+        for i in range(self.tab_widget.count()):
+            markdown_editor = self.tab_widget.widget(i)
+            markdown_editor.dark_mode = is_dark
+            markdown_editor.editor.set_dark_mode(is_dark)
+            markdown_editor.update_preview()
 
     def setup_shortcuts(self):
         # Toggle Preview shortcut
         toggle_preview_shortcut = QShortcut(QKeySequence("Ctrl+P"), self)
-        toggle_preview_shortcut.activated.connect(self.markdown_editor.toggle_preview)
+        toggle_preview_shortcut.activated.connect(self.toggle_preview)
 
         # Toggle Dark Mode shortcut
         toggle_dark_mode_shortcut = QShortcut(QKeySequence("Ctrl+D"), self)
         toggle_dark_mode_shortcut.activated.connect(
             self.dark_mode_button.toggle_dark_mode
         )
+
+    def toggle_preview(self):
+        current_editor = self.tab_widget.currentWidget()
+        if current_editor:
+            current_editor.toggle_preview()
 
 
 if __name__ == "__main__":
