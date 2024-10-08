@@ -15,7 +15,15 @@ from PyQt6.QtWidgets import (
     QTabWidget,
     QListWidgetItem,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression, QFile, QTextStream, QTimer, QEvent
+from PyQt6.QtCore import (
+    Qt,
+    pyqtSignal,
+    QRegularExpression,
+    QFile,
+    QTextStream,
+    QTimer,
+    QEvent,
+)
 from PyQt6.QtGui import (
     QSyntaxHighlighter,
     QTextCharFormat,
@@ -65,7 +73,9 @@ class CommandPalette(QDialog):
             # Remove '&' from action text (& represents the shortcut key)
             action.setText(action.text().replace("&", ""))
             item = QListWidgetItem(action.text())  # Use action text for display
-            item.setData(Qt.ItemDataRole.UserRole, action)  # Store the actual action in the item
+            item.setData(
+                Qt.ItemDataRole.UserRole, action
+            )  # Store the actual action in the item
             self.list_widget.addItem(item)
 
         # Highlight the first item
