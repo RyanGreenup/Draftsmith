@@ -1,39 +1,14 @@
 from PyQt6.QtWidgets import (
-    QApplication,
     QDialog,
     QLineEdit,
     QListWidget,
-    QMainWindow,
     QVBoxLayout,
-    QWidget,
-    QTextEdit,
-    QSplitter,
-    QPushButton,
-    QTextEdit,
-    QFileDialog,
-    QMessageBox,
-    QTabWidget,
     QListWidgetItem,
 )
 from PyQt6.QtCore import (
     Qt,
-    pyqtSignal,
-    QRegularExpression,
-    QFile,
-    QTextStream,
-    QTimer,
     QEvent,
 )
-from PyQt6.QtGui import (
-    QSyntaxHighlighter,
-    QTextCharFormat,
-    QFont,
-    QColor,
-    QPalette,
-    QKeyEvent,
-    QShortcut,
-)
-import sys
 
 
 class CommandPalette(QDialog):
