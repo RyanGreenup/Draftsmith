@@ -1,0 +1,8 @@
+- Pallette
+- Follow Links
+- Insert Links
+- Search
+    - Tantivy
+    - Semantic Search
+- FZF Open from Pallete
+- Image Preview
