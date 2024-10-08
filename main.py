@@ -1,3 +1,4 @@
+from enum import Enum
 import os
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
@@ -145,7 +146,18 @@ class DarkModeButton(QPushButton):
 
 
 class MarkdownEditor(QWidget):
-    """A QWidget containing a Markdown editor with toggleable live preview."""
+    """A QWidget containing a Markdown editor with toggleable live preview.
+
+    Slots:
+        - Connect to an Action
+            - toggle_preview: Toggle the Markdown preview.
+            - toggle_preview_overlay: Toggle the Markdown preview overlay.
+            - update_preview: Update the Markdown preview
+        - General
+            - update_preview: Update the Markdown preview
+            - toggle_dark_mode: Toggle the dark mode of the Markdown preview.
+              - Connect it to the app dark mode
+    """
 
     def __init__(self, css_file=None):
         super().__init__()
@@ -159,15 +171,6 @@ class MarkdownEditor(QWidget):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
         self.preview = QWebEngineView()
-        # These buttons are included only as an exemplar, probably
-        # Use the toolbar instead as it deals with the actions
-        # and Keyboard shortcuts
-        self.button = QPushButton("Hide Preview (Ctrl+P)")
-        self.button.clicked.connect(self.toggle_preview)
-
-        self.overlay_button = QPushButton("Overlay Preview (Ctrl+O)")
-        self.overlay_button.setCheckable(True)
-        self.overlay_button.clicked.connect(self.toggle_preview_overlay)
 
         # Create a splitter to divide editor and preview
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -189,8 +192,6 @@ class MarkdownEditor(QWidget):
 
     def build_layout(self):
         # Todo put these side by side
-        self.main_layout.addWidget(self.overlay_button)
-        self.main_layout.addWidget(self.button)
         self.main_layout.addWidget(self.splitter)
         self.setLayout(self.main_layout)
 
@@ -198,12 +199,10 @@ class MarkdownEditor(QWidget):
         self.preview_visible = not self.preview_visible
         if self.preview_visible:
             self.preview.show()
-            self.button.setText("Hide Preview (Ctrl+P)")
             self.splitter.setSizes([300, 300])
             self.update_preview()
         else:
             self.preview.hide()
-            self.button.setText("Show Preview (Ctrl+P)")
             self.splitter.setSizes([600, 0])
 
     def toggle_preview_overlay(self):
@@ -218,7 +217,6 @@ class MarkdownEditor(QWidget):
                 self.preview.show()
 
         self.preview_overlay = not self.preview_overlay
-        self.overlay_button.setChecked(self.preview_overlay)
 
     def update_preview(self):
         """Update the Markdown preview."""
@@ -228,7 +226,6 @@ class MarkdownEditor(QWidget):
                 text=text, css_path=self.css_file, dark_mode=self.dark_mode
             )
             self.preview.setHtml(markdown_content.build_html())
-
 
 
 class PreviewAction(QAction):
@@ -251,9 +248,23 @@ class DarkModeAction(QAction):
         self.setCheckable(True)
 
 
+class Icon(Enum):
+    PREVIEW = "icons/magnifier.png"
+    OVERLAY = "icons/switch.png"
+    NEW_TAB = "icons/plus-octagon.png"
+    CLOSE_TAB = "icons/cross-octagon.png"
+    OPEN = "icons/folder-open.png"
+    SAVE = "icons/disk.png"
+    REVERT = "icons/arrow-circle-315.png"
+    AUTOSAVE = "icons/clock-arrow.png"
+    AUTOREVERT = "icons/arrow-circle-315-frame.png"
+    PREVIOUS_TAB = "icons/arrow-180.png"
+    NEXT_TAB = "icons/arrow.png"
+
+
 class OverlayPreviewAction(QAction):
     def __init__(self, markdown_editor):
-        super().__init__(QIcon("icons/acorn.png"), "Overlay Preview", markdown_editor)
+        super().__init__(QIcon(Icon.OVERLAY.value), "Overlay Preview", markdown_editor)
         self.setStatusTip("Replace Editor with Preview")
         self.triggered.connect(markdown_editor.toggle_preview_overlay)
         self.setShortcut("Alt+O")
@@ -262,61 +273,77 @@ class OverlayPreviewAction(QAction):
 
 class NewTabAction(QAction):
     def __init__(self, main_window):
-        super().__init__(QIcon("icons/tab--plus.png"), "New Tab", main_window)
+        super().__init__(QIcon(Icon.NEW_TAB.value), "New Tab", main_window)
         self.setStatusTip("Open a new tab")
         self.triggered.connect(main_window.new_tab)
         self.setShortcut("Ctrl+T")
 
+
+class CloseTabAction(QAction):
+    def __init__(self, main_window):
+        super().__init__(QIcon(Icon.CLOSE_TAB.value), "Close Tab", main_window)
+        self.setStatusTip("Open a new tab")
+        self.triggered.connect(main_window.close_tab)
+        self.setShortcut("Ctrl+W")
+
+
 class OpenAction(QAction):
     def __init__(self, main_window):
-        super().__init__(QIcon("icons/folder-open.png"), "Open", main_window)
+        super().__init__(QIcon(Icon.OPEN.value), "Open", main_window)
         self.setStatusTip("Open a markdown file")
         self.triggered.connect(lambda: main_window.open_file(None))
         self.setShortcut("Ctrl+O")
 
+
 class SaveAction(QAction):
     def __init__(self, main_window):
-        super().__init__(QIcon("icons/disk.png"), "Save", main_window)
+        super().__init__(QIcon(Icon.SAVE.value), "Save", main_window)
         self.setStatusTip("Save the current file")
         self.triggered.connect(main_window.save_file)
         self.setShortcut("Ctrl+S")
 
+
 class RevertToDiskAction(QAction):
     def __init__(self, main_window):
-        super().__init__(QIcon("icons/arrow-circle-315.png"), "Revert to Disk", main_window)
+        super().__init__(QIcon(Icon.REVERT.value), "Revert to Disk", main_window)
         self.setStatusTip("Reload the current file from disk")
         self.triggered.connect(main_window.revert_to_disk)
         self.setShortcut("Ctrl+R")
 
+
 class AutoSaveAction(QAction):
     def __init__(self, main_window):
-        super().__init__(QIcon("icons/clock-arrow.png"), "Toggle AutoSave", main_window)
+        super().__init__(QIcon(Icon.AUTOSAVE.value), "Toggle AutoSave", main_window)
         self.setStatusTip("Toggle automatic saving")
         self.triggered.connect(main_window.toggle_autosave)
         self.setShortcut("Ctrl+Shift+A")
         self.setCheckable(True)
 
+
 class AutoRevertAction(QAction):
     def __init__(self, main_window):
-        super().__init__(QIcon("icons/arrow-circle-315-frame.png"), "Toggle AutoRevert", main_window)
+        super().__init__(QIcon(Icon.AUTOREVERT.value), "Toggle AutoRevert", main_window)
         self.setStatusTip("Toggle automatic reloading from disk")
         self.triggered.connect(main_window.toggle_autorevert)
         self.setShortcut("Ctrl+Shift+R")
         self.setCheckable(True)
 
+
 class PreviousTabAction(QAction):
     def __init__(self, main_window):
-        super().__init__(QIcon("icons/arrow-180.png"), "Previous Tab", main_window)
+        super().__init__(QIcon(Icon.PREVIOUS_TAB.value), "Previous Tab", main_window)
         self.setStatusTip("Switch to the previous tab")
         self.triggered.connect(main_window.previous_tab)
         self.setShortcut("Ctrl+[")
 
+
 class NextTabAction(QAction):
     def __init__(self, main_window):
-        super().__init__(QIcon("icons/arrow.png"), "Next Tab", main_window)
+        super().__init__(QIcon(Icon.NEXT_TAB.value), "Next Tab", main_window)
         self.setStatusTip("Switch to the next tab")
         self.triggered.connect(main_window.next_tab)
         self.setShortcut("Ctrl+]")
+
 
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
@@ -372,6 +399,12 @@ class MainWindow(QMainWindow):
         else:
             self.tab_widget.setCurrentIndex(0)
 
+    def close_tab(self):
+        current_tab = self.tab_widget.currentWidget()
+        if current_tab:
+            self.tab_widget.removeTab(self.tab_widget.currentIndex())
+            current_tab.deleteLater()
+
     def new_tab(self):
         # Create a new MarkdownEditor
         markdown_editor = MarkdownEditor(css_file=args.css)
@@ -385,11 +418,13 @@ class MainWindow(QMainWindow):
 
     def open_file(self, file_path=None):
         if not file_path:
-            file_path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Markdown Files (*.md);;All Files (*)")
+            file_path, _ = QFileDialog.getOpenFileName(
+                self, "Open File", "", "Markdown Files (*.md);;All Files (*)"
+            )
 
         if file_path:
             try:
-                with open(file_path, 'r', encoding='utf-8') as file:
+                with open(file_path, "r", encoding="utf-8") as file:
                     content = file.read()
 
                 # Get the current tab's MarkdownEditor
@@ -401,11 +436,13 @@ class MainWindow(QMainWindow):
                     current_editor = self.tab_widget.currentWidget()
 
                 current_editor.editor.setPlainText(content)
-                self.tab_widget.setTabText(self.tab_widget.currentIndex(), os.path.basename(file_path))
+                self.tab_widget.setTabText(
+                    self.tab_widget.currentIndex(), os.path.basename(file_path)
+                )
                 self.current_file = file_path
                 self.setWindowTitle(f"Markdown Editor - {os.path.basename(file_path)}")
             except Exception as e:
-                QMessageBox.warning(self, 'Error', f"Failed to open file: {str(e)}")
+                QMessageBox.warning(self, "Error", f"Failed to open file: {str(e)}")
 
     def toggle_autorevert(self):
         self.autorevert_enabled = not self.autorevert_enabled
@@ -419,38 +456,47 @@ class MainWindow(QMainWindow):
             self.autorevert_action.setChecked(self.autorevert_enabled)
 
     def autorevert(self):
-        if hasattr(self, 'current_file'):
+        if hasattr(self, "current_file"):
             self.open_file(self.current_file)
         else:
-            print("No file to autorevert")  # You might want to handle this case differently
+            print(
+                "No file to autorevert"
+            )  # You might want to handle this case differently
 
     def save_file(self):
         current_editor = self.tab_widget.currentWidget()
         if not current_editor:
             return
 
-        if not hasattr(self, 'current_file'):
-            file_path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Markdown Files (*.md);;All Files (*)")
+        if not hasattr(self, "current_file"):
+            file_path, _ = QFileDialog.getSaveFileName(
+                self, "Save File", "", "Markdown Files (*.md);;All Files (*)"
+            )
             if not file_path:
                 return  # User cancelled the save dialog
             self.current_file = file_path
 
-        with open(self.current_file, 'w', encoding='utf-8') as file:
+        with open(self.current_file, "w", encoding="utf-8") as file:
             file.write(current_editor.editor.toPlainText())
 
-        self.tab_widget.setTabText(self.tab_widget.currentIndex(), os.path.basename(self.current_file))
+        self.tab_widget.setTabText(
+            self.tab_widget.currentIndex(), os.path.basename(self.current_file)
+        )
         self.setWindowTitle(f"Markdown Editor - {os.path.basename(self.current_file)}")
 
     def revert_to_disk(self):
-        if hasattr(self, 'current_file'):
-            reply = QMessageBox.question(self, 'Revert to Disk',
-                                         "Are you sure you want to revert to the saved version? All unsaved changes will be lost.",
-                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                                         QMessageBox.StandardButton.No)
+        if hasattr(self, "current_file"):
+            reply = QMessageBox.question(
+                self,
+                "Revert to Disk",
+                "Are you sure you want to revert to the saved version? All unsaved changes will be lost.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
             if reply == QMessageBox.StandardButton.Yes:
                 self.open_file(self.current_file)
         else:
-            QMessageBox.warning(self, 'Revert to Disk', "No file is currently open.")
+            QMessageBox.warning(self, "Revert to Disk", "No file is currently open.")
 
     def toggle_autosave(self):
         self.autosave_enabled = not self.autosave_enabled
@@ -464,10 +510,12 @@ class MainWindow(QMainWindow):
             self.autosave_action.setChecked(self.autosave_enabled)
 
     def autosave(self):
-        if hasattr(self, 'current_file'):
+        if hasattr(self, "current_file"):
             self.save_file()
         else:
-            print("No file to autosave")  # You might want to handle this case differently
+            print(
+                "No file to autosave"
+            )  # You might want to handle this case differently
 
     def create_toolbar(self):
         # Create a Toolbar
@@ -477,6 +525,7 @@ class MainWindow(QMainWindow):
         actions = {
             "file": {
                 "new_tab": NewTabAction(self),
+                "close_tab": CloseTabAction(self),
                 "open": OpenAction(self),
                 "save": SaveAction(self),
                 "revert": RevertToDiskAction(self),
@@ -487,11 +536,21 @@ class MainWindow(QMainWindow):
             },
             "view": {
                 "darkmode": DarkModeAction(self),
-                "preview": PreviewAction(self.tab_widget.currentWidget() if self.tab_widget.count() > 0 else None),
-                "overlay": OverlayPreviewAction(self.tab_widget.currentWidget() if self.tab_widget.count() > 0 else None),
+                "preview": PreviewAction(
+                    self.tab_widget.currentWidget()
+                    if self.tab_widget.count() > 0
+                    else None
+                ),
+                "overlay": OverlayPreviewAction(
+                    self.tab_widget.currentWidget()
+                    if self.tab_widget.count() > 0
+                    else None
+                ),
                 "previous_tab": PreviousTabAction(self),
                 "next_tab": NextTabAction(self),
             },
+            "tabs": {
+                }
         }
 
         # Add File actions to toolbar
