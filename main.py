@@ -265,11 +265,11 @@ class Icon(Enum):
 
 
 class OverlayPreviewAction(QAction):
-    def __init__(self, markdown_editor):
+    def __init__(self, markdown_editor, parent):
         super().__init__(QIcon(Icon.OVERLAY.value), "Overlay Preview", markdown_editor)
         self.setStatusTip("Replace Editor with Preview")
         self.triggered.connect(markdown_editor.toggle_preview_overlay)
-        self.setShortcut("Alt+O")
+        self.setShortcut("Ctrl+E")
         self.setCheckable(True)
 
 
@@ -372,6 +372,10 @@ class MainWindow(QMainWindow):
                 self.setWindowTitle(f"Markdown Editor - {os.path.basename(file_path)}")
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Failed to open file: {str(e)}")
+
+    def open_multiple_files(self, file_paths):
+        for file_path in file_paths:
+            self.open_file(file_path)
 
     def toggle_autorevert(self):
         self.autorevert_enabled = not self.autorevert_enabled
@@ -665,7 +669,7 @@ if __name__ == "__main__":
         "--css", type=str, help="Path to a CSS file for the markdown preview"
     )
     parser.add_argument(
-        "input_file", nargs="?", help="Path to the markdown file to open"
+        "input_files", nargs="*", help="Paths to the markdown files to open"
     )
     parser.add_argument(
         "--autosave", action="store_true", help="Start with autosave enabled"
@@ -675,15 +679,14 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
 
-    if args.input_file:
-        window.open_file(args.input_file)
+    if args.input_files:
+        window.open_multiple_files(args.input_files)
 
     if args.autosave:
         window.toggle_autosave()
 
     window.show()
     sys.exit(app.exec())
-
 
 # Footnotes
 # [^1]: https://facelessuser.github.io/pymdown-extensions/extensions/blocks/plugins/details/
