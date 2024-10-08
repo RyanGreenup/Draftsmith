@@ -482,7 +482,7 @@ class MainWindow(QMainWindow):
             "View": {
                 "darkmode": self.build_action(
                     Icon.DARK_MODE.value,
-                    "Dark Mode",
+                    "Dark Mode (Toggle)",
                     "Toggle Dark Mode",
                     self.toggle_app_dark_mode,
                     "Ctrl+D",
@@ -496,7 +496,7 @@ class MainWindow(QMainWindow):
                     "Ctrl+G",
                 ),
                 "overlay": self.build_action(
-                    Icon.OVERLAY.value,
+                    Icon.PREVIEW.value,
                     "Overlay Preview",
                     "Replace Editor with Preview",
                     toggle_overlay_preview,
@@ -649,9 +649,7 @@ class MainWindow(QMainWindow):
             markdown_editor.update_preview()
 
     def open_command_palette(self):
-        self.command_palette.show()
-        self.command_palette.search_bar.setFocus()
-        self.command_palette.search_bar.clear()
+        self.command_palette.open()
 
     def collect_actions_from_menu(self, menu_dict):
         actions = []

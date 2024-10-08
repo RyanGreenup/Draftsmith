@@ -9,6 +9,7 @@ from PyQt6.QtCore import (
     Qt,
     QEvent,
 )
+import sys
 
 
 class CommandPalette(QDialog):
@@ -44,10 +45,27 @@ class CommandPalette(QDialog):
         self.setFixedSize(400, 300)
 
     def populate_actions(self):
+        # Set Monospace font
+        font = self.list_widget.font()
+        font.setFamily("Fira Code")  # TODO config Option
+        self.list_widget.setFont(font)
+
+        # Set Margins
+        self.list_widget.setContentsMargins(10, 10, 10, 10)
+
+        # Text .....................................
+
+        # Measure Alignment of shortcut and action
+        # Get the Maximum Length of the Action Text
+        m = max(len(action.text()) for action in self.actions)
+        # Upper Bound of 60 char
+        max_length = min(m, 60)
+
+        # Add the Actions
         for action in self.actions:
-            # Remove '&' from action text (& represents the shortcut key)
-            action.setText(action.text().replace("&", ""))
-            item = QListWidgetItem(action.text())  # Use action text for display
+            lab = f"{action.text().replace("&", ""):<{max_length}
+                     }     ({action.shortcut().toString()})"
+            item = QListWidgetItem(lab)  # Use action text for display
             item.setData(
                 Qt.ItemDataRole.UserRole, action
             )  # Store the actual action in the item
@@ -102,3 +120,8 @@ class CommandPalette(QDialog):
                 self.list_widget.setCurrentItem(item)
                 return
             next_row += direction
+
+    def open(self):
+        self.show()
+        self.search_bar.setFocus()
+        self.search_bar.clear()
