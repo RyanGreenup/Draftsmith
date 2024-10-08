@@ -1,5 +1,6 @@
 from enum import Enum
 import os
+from pallete import CommandPalette
 from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
@@ -264,6 +265,7 @@ class Icon(Enum):
     PREVIOUS_TAB = "icons/arrow-180.png"
     NEXT_TAB = "icons/arrow.png"
     DARK_MODE = "icons/light-bulb.png"
+    PALLETE = "icons/keyboard.png"
 
 
 class MainWindow(QMainWindow):
@@ -309,6 +311,7 @@ class MainWindow(QMainWindow):
         # Connect tab change signal
         self.tab_widget.currentChanged.connect(self.update_current_tab_actions)
 
+    # TODO Remove this?
     def update_current_tab_actions(self):
         current_editor = self.tab_widget.currentWidget()
         if current_editor:
@@ -460,7 +463,7 @@ class MainWindow(QMainWindow):
             if current_editor:
                 current_editor.toggle_preview_overlay()
 
-        actions = {
+        menu_dict = {
             "File": {
                 "new_tab": self.build_action(
                     Icon.NEW_TAB.value,
@@ -534,6 +537,13 @@ class MainWindow(QMainWindow):
                     toggle_overlay_preview,
                     "Ctrl+E",
                 ),
+                "Open Command Pallete": self.build_action(
+                    Icon.PALLETE.value,
+                    "Command Palette",
+                    "Open the command palette",
+                    self.open_command_palette,
+                    "Ctrl+P",
+                ),
                 "Tabs": {
                     "previous_tab": self.build_action(
                         Icon.PREVIOUS_TAB.value,
@@ -553,35 +563,53 @@ class MainWindow(QMainWindow):
             },
         }
         # Store the AutoSave, AutoRevert, and Overlay Preview actions for later use
-        self.autosave_action = actions["Edit"]["autosave"]
-        self.autorevert_action = actions["Edit"]["autorevert"]
-        self.overlay_preview_action = actions["View"]["overlay"]
+        self.autosave_action = menu_dict["Edit"]["autosave"]
+        self.autorevert_action = menu_dict["Edit"]["autorevert"]
+        self.overlay_preview_action = menu_dict["View"]["overlay"]
 
         # Fill the Toolbar with actions
         # Flatten dictionary structure
         self.fill_toolbar(
             [
-                actions["File"]["new_tab"],
-                actions["File"]["close_tab"],
+                menu_dict["File"]["new_tab"],
+                menu_dict["File"]["close_tab"],
                 "sep",
-                actions["File"]["open"],
-                actions["File"]["save"],
+                menu_dict["File"]["open"],
+                menu_dict["File"]["save"],
                 "sep",
-                actions["File"]["revert"],
-                actions["Edit"]["autosave"],
+                menu_dict["File"]["revert"],
+                menu_dict["Edit"]["autosave"],
                 "sep",
-                actions["View"]["darkmode"],
+                menu_dict["View"]["darkmode"],
                 "sep",
-                actions["View"]["Tabs"]["previous_tab"],
-                actions["View"]["Tabs"]["next_tab"],
+                menu_dict["View"]["Tabs"]["previous_tab"],
+                menu_dict["View"]["Tabs"]["next_tab"],
                 "sep",
-                actions["View"]["preview"],
-                actions["View"]["overlay"],
+                menu_dict["View"]["preview"],
+                menu_dict["View"]["overlay"],
             ]
         )
 
         main_menu = self.menuBar()
-        self.create_menus_from_structure(actions, main_menu)
+
+
+        self.create_menus_from_structure(menu_dict, main_menu)
+
+        # Collect actions from the menu structure
+        self.actions = self.collect_actions_from_menu(menu_dict)
+
+        # Create command palette
+        self.command_palette = CommandPalette(self.actions)
+
+    def collect_actions_from_menu(self, menu_dict):
+        actions = []
+        for value in menu_dict.values():
+            if isinstance(value, dict):
+                if "action" in value:
+                    actions.append(value["action"])
+                else:
+                    actions.extend(self.collect_actions_from_menu(value))
+        return actions
 
     def build_action(
         self,
@@ -656,7 +684,7 @@ class MainWindow(QMainWindow):
 
     def setup_shortcuts(self):
         # Toggle Preview shortcut
-        toggle_preview_shortcut = QShortcut(QKeySequence("Ctrl+P"), self)
+        toggle_preview_shortcut = QShortcut(QKeySequence("Ctrl+G"), self)
         toggle_preview_shortcut.activated.connect(self.toggle_preview)
 
         # Toggle Dark Mode shortcut
@@ -669,6 +697,20 @@ class MainWindow(QMainWindow):
         current_editor = self.tab_widget.currentWidget()
         if current_editor:
             current_editor.toggle_preview()
+
+    def open_command_palette(self):
+        self.command_palette.show()
+        self.command_palette.search_bar.setFocus()
+        self.command_palette.search_bar.clear()
+
+    def collect_actions_from_menu(self, menu_dict):
+        actions = []
+        for value in menu_dict.values():
+            if isinstance(value, dict):
+                actions.extend(self.collect_actions_from_menu(value))
+            elif isinstance(value, QAction):
+                actions.append(value)
+        return actions
 
 
 if __name__ == "__main__":

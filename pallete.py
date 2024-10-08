@@ -1,12 +1,29 @@
-from PySide6.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication,
-    QMainWindow,
     QDialog,
-    QListWidget,
     QLineEdit,
+    QListWidget,
+    QMainWindow,
     QVBoxLayout,
+    QWidget,
+    QTextEdit,
+    QSplitter,
+    QPushButton,
+    QTextEdit,
+    QFileDialog,
+    QMessageBox,
+    QTabWidget,
     QListWidgetItem,
-    QAction,
+)
+from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression, QFile, QTextStream, QTimer
+from PyQt6.QtGui import (
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QFont,
+    QColor,
+    QPalette,
+    QKeyEvent,
+    QShortcut,
 )
 import sys
 
@@ -15,6 +32,7 @@ class CommandPalette(QDialog):
     def __init__(self, actions):
         super().__init__()
         self.setWindowTitle("Command Palette")
+        self.setGeometry(100, 100, 400, 300)
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -39,7 +57,7 @@ class CommandPalette(QDialog):
     def populate_actions(self):
         for action in self.actions:
             item = QListWidgetItem(action.text())  # Use action text for display
-            item.setData(1, action)  # Store the actual action in the item
+            item.setData(Qt.ItemDataRole.UserRole, action)  # Store the actual action in the item
             self.list_widget.addItem(item)
 
     def filter_actions(self, text):
@@ -48,7 +66,7 @@ class CommandPalette(QDialog):
             item.setHidden(text.lower() not in item.text().lower())
 
     def execute_action(self, item):
-        action = item.data(1)
+        action = item.data(Qt.ItemDataRole.UserRole)
         if action:
             action.trigger()  # Execute the action
         self.close()
