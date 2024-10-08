@@ -265,7 +265,7 @@ class Icon(Enum):
 
 
 class OverlayPreviewAction(QAction):
-    def __init__(self, markdown_editor, parent):
+    def __init__(self, markdown_editor):
         super().__init__(QIcon(Icon.OVERLAY.value), "Overlay Preview", markdown_editor)
         self.setStatusTip("Replace Editor with Preview")
         self.triggered.connect(markdown_editor.toggle_preview_overlay)
