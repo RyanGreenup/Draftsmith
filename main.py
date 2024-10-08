@@ -160,6 +160,8 @@ class MarkdownEditor(QWidget):
               - Connect it to the app dark mode
     """
 
+    overlay_toggled = pyqtSignal(bool)
+
     def __init__(self, css_file=None):
         super().__init__()
         self.css_file = css_file
@@ -207,17 +209,17 @@ class MarkdownEditor(QWidget):
             self.splitter.setSizes([600, 0])
 
     def toggle_preview_overlay(self):
-        # TODO, the preview needs to be initialized or something because of the flickering issue
         if self.preview_overlay:
-            self.editor.hide()
-            self.update_preview()
-            self.preview.show()
-        else:
             self.editor.show()
             if self.preview_visible:
                 self.preview.show()
+        else:
+            self.editor.hide()
+            self.preview.show()
+            self.update_preview()
 
         self.preview_overlay = not self.preview_overlay
+        self.overlay_toggled.emit(self.preview_overlay)
 
     def update_preview(self):
         """Update the Markdown preview."""
@@ -265,10 +267,10 @@ class Icon(Enum):
 
 
 class OverlayPreviewAction(QAction):
-    def __init__(self, markdown_editor):
-        super().__init__(QIcon(Icon.OVERLAY.value), "Overlay Preview", markdown_editor)
+    def __init__(self, main_window):
+        super().__init__(QIcon(Icon.OVERLAY.value), "Overlay Preview", main_window)
         self.setStatusTip("Replace Editor with Preview")
-        self.triggered.connect(markdown_editor.toggle_preview_overlay)
+        self.triggered.connect(main_window.toggle_overlay_preview)
         self.setShortcut("Ctrl+E")
         self.setCheckable(True)
 
@@ -314,6 +316,25 @@ class MainWindow(QMainWindow):
         self.autorevert_enabled = False
         self.autorevert_action = None  # We'll set this in create_toolbar
 
+        # Connect tab change signal
+        self.tab_widget.currentChanged.connect(self.update_current_tab_actions)
+
+    def toggle_overlay_preview(self):
+        current_editor = self.tab_widget.currentWidget()
+        if current_editor:
+            current_editor.toggle_preview_overlay()
+            self.update_overlay_preview_action()
+
+    def update_overlay_preview_action(self):
+        current_editor = self.tab_widget.currentWidget()
+        if current_editor and hasattr(self, 'overlay_preview_action'):
+            self.overlay_preview_action.setChecked(current_editor.preview_overlay)
+
+    def update_current_tab_actions(self):
+        current_editor = self.tab_widget.currentWidget()
+        if current_editor:
+            self.overlay_preview_action.setChecked(current_editor.preview_overlay)
+
     def previous_tab(self):
         current_index = self.tab_widget.currentIndex()
         if current_index > 0:
@@ -344,6 +365,9 @@ class MainWindow(QMainWindow):
 
         # Set the new tab as the current tab
         self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
+
+        # Connect the overlay_toggled signal
+        markdown_editor.overlay_toggled.connect(self.update_overlay_preview_action)
 
     def open_file(self, file_path=None):
         if not file_path:
@@ -522,10 +546,12 @@ class MainWindow(QMainWindow):
                     if self.tab_widget.count() > 0
                     else None
                 ),
-                "overlay": OverlayPreviewAction(
-                    self.tab_widget.currentWidget()
-                    if self.tab_widget.count() > 0
-                    else None
+                "overlay": self.build_action(
+                    Icon.OVERLAY.value,
+                    "Overlay Preview",
+                    "Replace Editor with Preview",
+                    self.toggle_overlay_preview,
+                    "Ctrl+E",
                 ),
                 "Tabs": {
                     "previous_tab": self.build_action(
@@ -545,9 +571,10 @@ class MainWindow(QMainWindow):
                 },
             },
         }
-        # Store the AutoSave and AutoRevert actions for later use
+        # Store the AutoSave, AutoRevert, and Overlay Preview actions for later use
         self.autosave_action = actions["Edit"]["autosave"]
         self.autorevert_action = actions["Edit"]["autorevert"]
+        self.overlay_preview_action = actions["View"]["overlay"]
 
         # Fill the Toolbar with actions
         # Flatten dictionary structure
