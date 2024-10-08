@@ -266,7 +266,6 @@ class Icon(Enum):
     DARK_MODE = "icons/light-bulb.png"
 
 
-
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
 
@@ -309,7 +308,6 @@ class MainWindow(QMainWindow):
 
         # Connect tab change signal
         self.tab_widget.currentChanged.connect(self.update_current_tab_actions)
-
 
     def update_current_tab_actions(self):
         current_editor = self.tab_widget.currentWidget()
@@ -456,7 +454,6 @@ class MainWindow(QMainWindow):
         # Create a Toolbar
         toolbar = QToolBar("Main Toolbar")
         toolbar.setIconSize(QSize(16, 16))
-
 
         def toggle_overlay_preview():
             current_editor = self.tab_widget.currentWidget()
@@ -623,7 +620,7 @@ class MainWindow(QMainWindow):
             )  # Start from the menu bar if no parent menu is provided
 
         for menu_title, submenu_or_action in menu_structure.items():
-            menu_title = "&"+menu_title  # Add an accelerator key (i.e. a Mnemonic)
+            menu_title = "&" + menu_title  # Add an accelerator key (i.e. a Mnemonic)
             if isinstance(submenu_or_action, dict):
                 # Create a new submenu
                 sub_menu = parent_menu.addMenu(menu_title)

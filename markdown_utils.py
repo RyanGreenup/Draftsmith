@@ -3,8 +3,9 @@ import markdown
 from pathlib import Path
 import re
 
-INLINE_MATH_PATTERN = re.compile(r'\$(.+?)\$')
-BLOCK_MATH_PATTERN = re.compile(r'\$\$([\s\S]+?)\$\$')
+INLINE_MATH_PATTERN = re.compile(r"\$(.+?)\$")
+BLOCK_MATH_PATTERN = re.compile(r"\$\$([\s\S]+?)\$\$")
+
 
 class Markdown:
     def __init__(
@@ -17,13 +18,13 @@ class Markdown:
 
     def _preserve_math(self, match):
         math = match.group(0)
-        placeholder = f'MATH_PLACEHOLDER_{len(self.math_blocks)}'
+        placeholder = f"MATH_PLACEHOLDER_{len(self.math_blocks)}"
         self.math_blocks.append(math)
         return placeholder
 
     def _restore_math(self, text):
         for i, math in enumerate(self.math_blocks):
-            placeholder = f'MATH_PLACEHOLDER_{i}'
+            placeholder = f"MATH_PLACEHOLDER_{i}"
             text = text.replace(placeholder, math)
         return text
 

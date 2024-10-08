@@ -12,22 +12,24 @@ class WebPopupInTextEdit:
         self.frame = QFrame(self.text_edit)
         self.frame.setFrameShape(QFrame.Shape.Box)
         self.frame.setLineWidth(1)
-        
+
         layout = QVBoxLayout(self.frame)
         layout.setContentsMargins(1, 1, 1, 1)
-        
+
         self.popup_view = QWebEngineView()
         layout.addWidget(self.popup_view)
-        
+
         self.frame.setLayout(layout)
         self.frame.setWindowFlags(
-            Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+            Qt.WindowType.ToolTip
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
         )
         self.frame.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.frame.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.frame.setFixedSize(302, 102)  # Adjust size as needed (including border)
         self.frame.hide()
-        
+
         self.popup_view.page().contentsSizeChanged.connect(self.adjust_popup_size)
         self.visible = False
         self.dark_mode = False
@@ -37,7 +39,9 @@ class WebPopupInTextEdit:
         global_pos = self.text_edit.mapToGlobal(cursor_rect.bottomRight())
 
         if is_math:
-            is_block_math = content.strip().startswith("$$") and content.strip().endswith("$$")
+            is_block_math = content.strip().startswith(
+                "$$"
+            ) and content.strip().endswith("$$")
             math_text = content.strip() if is_block_math else f"${content.strip()}$"
             markdown_content = Markdown(text=math_text, dark_mode=self.dark_mode)
             html = markdown_content.build_html()
@@ -63,20 +67,24 @@ class WebPopupInTextEdit:
     def set_dark_mode(self, is_dark):
         self.dark_mode = is_dark
         if is_dark:
-            self.frame.setStyleSheet("""
+            self.frame.setStyleSheet(
+                """
                 QFrame {
                     background-color: #2d2d2d;
                     border: 1px solid #555;
                 }
-            """)
+            """
+            )
         else:
-            self.frame.setStyleSheet("""
+            self.frame.setStyleSheet(
+                """
                 QFrame {
                     background-color: #ffffff;
                     border: 1px solid #ccc;
                 }
-            """)
-        
+            """
+            )
+
         # Re-render the current content with the new dark mode setting
         if self.visible:
             cursor = self.text_edit.textCursor()
@@ -100,8 +108,8 @@ class WebPopupInTextEdit:
         pos = cursor.position()
 
         # Patterns to match math environments
-        double_dollar_pattern = re.compile(r'\$\$(.*?)\$\$', re.DOTALL)
-        single_dollar_pattern = re.compile(r'(?<!\$)\$((?!\$).+?)(?<!\$)\$', re.DOTALL)
+        double_dollar_pattern = re.compile(r"\$\$(.*?)\$\$", re.DOTALL)
+        single_dollar_pattern = re.compile(r"(?<!\$)\$((?!\$).+?)(?<!\$)\$", re.DOTALL)
 
         # Check if cursor is inside any double-dollar math environment
         for match in double_dollar_pattern.finditer(text):
