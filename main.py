@@ -523,18 +523,18 @@ class MainWindow(QMainWindow):
         toolbar.setIconSize(QSize(16, 16))
 
         actions = {
-            "file": {
+            "File": {
                 "new_tab": NewTabAction(self),
                 "close_tab": CloseTabAction(self),
                 "open": OpenAction(self),
                 "save": SaveAction(self),
                 "revert": RevertToDiskAction(self),
             },
-            "edit": {
+            "Edit": {
                 "autosave": AutoSaveAction(self),
                 "autorevert": AutoRevertAction(self),
             },
-            "view": {
+            "View": {
                 "darkmode": DarkModeAction(self),
                 "preview": PreviewAction(
                     self.tab_widget.currentWidget()
@@ -546,47 +546,39 @@ class MainWindow(QMainWindow):
                     if self.tab_widget.count() > 0
                     else None
                 ),
-                "previous_tab": PreviousTabAction(self),
-                "next_tab": NextTabAction(self),
+                "Tabs": {
+                    "previous_tab": PreviousTabAction(self),
+                    "next_tab": NextTabAction(self),
+                },
             },
-            "tabs": {
-                }
         }
-
-        # Add File actions to toolbar
-        for action in actions["file"].values():
-            toolbar.addAction(action)
-
-        # Add a separator
-        toolbar.addSeparator()
-
-        # Add View actions to toolbar
-        for action in actions["view"].values():
-            toolbar.addAction(action)
-
-        # Add tab navigation actions to toolbar
-        toolbar.addAction(actions["view"]["previous_tab"])
-        toolbar.addAction(actions["view"]["next_tab"])
-
-        # Fill the Toolbar
-        self.addToolBar(toolbar)
-
-        # Add a Menu
-        menu = self.menuBar()
-        if menu:
-            file_menu = menu.addMenu("File")
-            for action in actions["file"].values():
-                file_menu.addAction(action)
-            edit_menu = menu.addMenu("Edit")
-            for action in actions["edit"].values():
-                edit_menu.addAction(action)
-            view_menu = menu.addMenu("View")
-            for action in actions["view"].values():
-                view_menu.addAction(action)
-
         # Store the AutoSave and AutoRevert actions for later use
-        self.autosave_action = actions["edit"]["autosave"]
-        self.autorevert_action = actions["edit"]["autorevert"]
+        self.autosave_action = actions["Edit"]["autosave"]
+        self.autorevert_action = actions["Edit"]["autorevert"]
+
+        main_menu = self.menuBar()
+        self.create_menus_from_structure(actions, main_menu)
+
+    def create_menus_from_structure(self, menu_structure, parent_menu=None):
+        if parent_menu is None:
+            parent_menu = (
+                self.menuBar()
+            )  # Start from the menu bar if no parent menu is provided
+
+        for menu_title, submenu_or_action in menu_structure.items():
+            if isinstance(submenu_or_action, dict):
+                # Create a new submenu
+                sub_menu = parent_menu.addMenu(menu_title)
+                # Recursively create submenus and actions
+                self.create_menus_from_structure(submenu_or_action, sub_menu)
+            elif isinstance(submenu_or_action, QAction):
+                # Add action to the current menu
+                parent_menu.addAction(submenu_or_action)
+            else:
+                # Handle incorrect types
+                print(
+                    f"Warning: Unsupported menu structure item type {type(submenu_or_action)}"
+                )
 
     def toggle_app_dark_mode(self, is_dark):
         """
