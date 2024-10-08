@@ -1,5 +1,6 @@
 from enum import Enum
 import os
+from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
 from markdown_utils import Markdown
@@ -256,10 +257,11 @@ class Icon(Enum):
     OPEN = "icons/folder-open.png"
     SAVE = "icons/disk.png"
     REVERT = "icons/arrow-circle-315.png"
-    AUTOSAVE = "icons/clock-arrow.png"
+    AUTOSAVE = "icons/clock-moon-phase.png"
     AUTOREVERT = "icons/arrow-circle-315-frame.png"
     PREVIOUS_TAB = "icons/arrow-180.png"
     NEXT_TAB = "icons/arrow.png"
+    DARK_MODE = "icons/light-bulb.png"
 
 
 class OverlayPreviewAction(QAction):
@@ -270,79 +272,6 @@ class OverlayPreviewAction(QAction):
         self.setShortcut("Alt+O")
         self.setCheckable(True)
 
-
-class NewTabAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.NEW_TAB.value), "New Tab", main_window)
-        self.setStatusTip("Open a new tab")
-        self.triggered.connect(main_window.new_tab)
-        self.setShortcut("Ctrl+T")
-
-
-class CloseTabAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.CLOSE_TAB.value), "Close Tab", main_window)
-        self.setStatusTip("Open a new tab")
-        self.triggered.connect(main_window.close_tab)
-        self.setShortcut("Ctrl+W")
-
-
-class OpenAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.OPEN.value), "Open", main_window)
-        self.setStatusTip("Open a markdown file")
-        self.triggered.connect(lambda: main_window.open_file(None))
-        self.setShortcut("Ctrl+O")
-
-
-class SaveAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.SAVE.value), "Save", main_window)
-        self.setStatusTip("Save the current file")
-        self.triggered.connect(main_window.save_file)
-        self.setShortcut("Ctrl+S")
-
-
-class RevertToDiskAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.REVERT.value), "Revert to Disk", main_window)
-        self.setStatusTip("Reload the current file from disk")
-        self.triggered.connect(main_window.revert_to_disk)
-        self.setShortcut("Ctrl+R")
-
-
-class AutoSaveAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.AUTOSAVE.value), "Toggle AutoSave", main_window)
-        self.setStatusTip("Toggle automatic saving")
-        self.triggered.connect(main_window.toggle_autosave)
-        self.setShortcut("Ctrl+Shift+A")
-        self.setCheckable(True)
-
-
-class AutoRevertAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.AUTOREVERT.value), "Toggle AutoRevert", main_window)
-        self.setStatusTip("Toggle automatic reloading from disk")
-        self.triggered.connect(main_window.toggle_autorevert)
-        self.setShortcut("Ctrl+Shift+R")
-        self.setCheckable(True)
-
-
-class PreviousTabAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.PREVIOUS_TAB.value), "Previous Tab", main_window)
-        self.setStatusTip("Switch to the previous tab")
-        self.triggered.connect(main_window.previous_tab)
-        self.setShortcut("Ctrl+[")
-
-
-class NextTabAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.NEXT_TAB.value), "Next Tab", main_window)
-        self.setStatusTip("Switch to the next tab")
-        self.triggered.connect(main_window.next_tab)
-        self.setShortcut("Ctrl+]")
 
 
 class MainWindow(QMainWindow):
@@ -524,18 +453,66 @@ class MainWindow(QMainWindow):
 
         actions = {
             "File": {
-                "new_tab": NewTabAction(self),
-                "close_tab": CloseTabAction(self),
-                "open": OpenAction(self),
-                "save": SaveAction(self),
-                "revert": RevertToDiskAction(self),
+                "new_tab": self.build_action(
+                    Icon.NEW_TAB.value,
+                    "New Tab",
+                    "Open a new tab",
+                    self.new_tab,
+                    "Ctrl+T",
+                ),
+                "close_tab": self.build_action(
+                    Icon.CLOSE_TAB.value,
+                    "Close Tab",
+                    "Close the current tab",
+                    self.close_tab,
+                    "Ctrl+W",
+                ),
+                "open": self.build_action(
+                    Icon.OPEN.value,
+                    "Open",
+                    "Open a markdown file",
+                    lambda: self.open_file(None),
+                    "Ctrl+O",
+                ),
+                "save": self.build_action(
+                    Icon.SAVE.value,
+                    "Save",
+                    "Save the current file",
+                    self.save_file,
+                    "Ctrl+S",
+                ),
+                "revert": self.build_action(
+                    Icon.REVERT.value,
+                    "Revert to Disk",
+                    "Reload the current file from disk",
+                    self.revert_to_disk,
+                    "Ctrl+R",
+                ),
             },
             "Edit": {
-                "autosave": AutoSaveAction(self),
-                "autorevert": AutoRevertAction(self),
+                "autosave": self.build_action(
+                    Icon.AUTOSAVE.value,
+                    "Toggle AutoSave",
+                    "Toggle automatic saving",
+                    self.toggle_autosave,
+                    "Ctrl+Shift+A",
+                ),
+                "autorevert": self.build_action(
+                    Icon.AUTOREVERT.value,
+                    "Toggle AutoRevert",
+                    "Toggle automatic reloading from disk",
+                    self.toggle_autorevert,
+                    "Ctrl+Shift+R",
+                ),
             },
             "View": {
-                "darkmode": DarkModeAction(self),
+                "darkmode": self.build_action(
+                    Icon.DARK_MODE.value,
+                    "Dark Mode",
+                    "Toggle Dark Mode",
+                    self.toggle_app_dark_mode,
+                    "Alt+D",
+                ),
                 "preview": PreviewAction(
                     self.tab_widget.currentWidget()
                     if self.tab_widget.count() > 0
@@ -547,8 +524,20 @@ class MainWindow(QMainWindow):
                     else None
                 ),
                 "Tabs": {
-                    "previous_tab": PreviousTabAction(self),
-                    "next_tab": NextTabAction(self),
+                    "previous_tab": self.build_action(
+                        Icon.PREVIOUS_TAB.value,
+                        "Previous Tab",
+                        "Switch to the previous tab",
+                        self.previous_tab,
+                        "Ctrl+[",
+                    ),
+                    "next_tab": self.build_action(
+                        Icon.NEXT_TAB.value,
+                        "Next Tab",
+                        "Switch to the next tab",
+                        self.next_tab,
+                        "Ctrl+]",
+                    ),
                 },
             },
         }
@@ -556,8 +545,61 @@ class MainWindow(QMainWindow):
         self.autosave_action = actions["Edit"]["autosave"]
         self.autorevert_action = actions["Edit"]["autorevert"]
 
+        # Fill the Toolbar with actions
+        # Flatten dictionary structure
+        self.fill_toolbar(
+            [
+                actions["File"]["new_tab"],
+                actions["File"]["close_tab"],
+                "sep",
+                actions["File"]["open"],
+                actions["File"]["save"],
+                "sep",
+                actions["File"]["revert"],
+                actions["Edit"]["autosave"],
+                "sep",
+                actions["View"]["darkmode"],
+                "sep",
+                actions["View"]["Tabs"]["previous_tab"],
+                actions["View"]["Tabs"]["next_tab"],
+                "sep",
+                actions["View"]["preview"],
+                actions["View"]["overlay"],
+            ]
+        )
+
         main_menu = self.menuBar()
         self.create_menus_from_structure(actions, main_menu)
+
+    def build_action(
+        self,
+        icon: str,
+        name: str,
+        description: str,
+        callback: Callable,
+        shortcut_key: str | None,
+    ) -> QAction:
+        name = "&" + name  # Add an accelerator key (i.e. a Mnemonic)
+        action = QAction(QIcon(icon), name, self)
+        action.setStatusTip(description)
+        action.triggered.connect(callback)
+        if shortcut_key:
+            action.setShortcut(shortcut_key)
+        return action
+
+    def fill_toolbar(self, actions):
+        toolbar = QToolBar("Main Toolbar")
+        toolbar.setIconSize(QSize(16, 16))
+
+        for action in actions:
+            if isinstance(action, QAction):
+                toolbar.addAction(action)
+            else:
+                if isinstance(action, str):
+                    if action == "sep":
+                        toolbar.addSeparator()
+
+        self.addToolBar(toolbar)
 
     def create_menus_from_structure(self, menu_structure, parent_menu=None):
         if parent_menu is None:
@@ -566,6 +608,7 @@ class MainWindow(QMainWindow):
             )  # Start from the menu bar if no parent menu is provided
 
         for menu_title, submenu_or_action in menu_structure.items():
+            menu_title = "&"+menu_title  # Add an accelerator key (i.e. a Mnemonic)
             if isinstance(submenu_or_action, dict):
                 # Create a new submenu
                 sub_menu = parent_menu.addMenu(menu_title)
