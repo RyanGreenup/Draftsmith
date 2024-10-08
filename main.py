@@ -266,15 +266,6 @@ class Icon(Enum):
     DARK_MODE = "icons/light-bulb.png"
 
 
-class OverlayPreviewAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon(Icon.OVERLAY.value), "Overlay Preview", main_window)
-        self.setStatusTip("Replace Editor with Preview")
-        self.triggered.connect(main_window.toggle_overlay_preview)
-        self.setShortcut("Ctrl+E")
-        self.setCheckable(True)
-
-
 
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
@@ -319,16 +310,6 @@ class MainWindow(QMainWindow):
         # Connect tab change signal
         self.tab_widget.currentChanged.connect(self.update_current_tab_actions)
 
-    def toggle_overlay_preview(self):
-        current_editor = self.tab_widget.currentWidget()
-        if current_editor:
-            current_editor.toggle_preview_overlay()
-            self.update_overlay_preview_action()
-
-    def update_overlay_preview_action(self):
-        current_editor = self.tab_widget.currentWidget()
-        if current_editor and hasattr(self, 'overlay_preview_action'):
-            self.overlay_preview_action.setChecked(current_editor.preview_overlay)
 
     def update_current_tab_actions(self):
         current_editor = self.tab_widget.currentWidget()
@@ -365,9 +346,6 @@ class MainWindow(QMainWindow):
 
         # Set the new tab as the current tab
         self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
-
-        # Connect the overlay_toggled signal
-        markdown_editor.overlay_toggled.connect(self.update_overlay_preview_action)
 
     def open_file(self, file_path=None):
         if not file_path:
@@ -479,6 +457,12 @@ class MainWindow(QMainWindow):
         toolbar = QToolBar("Main Toolbar")
         toolbar.setIconSize(QSize(16, 16))
 
+
+        def toggle_overlay_preview():
+            current_editor = self.tab_widget.currentWidget()
+            if current_editor:
+                current_editor.toggle_preview_overlay()
+
         actions = {
             "File": {
                 "new_tab": self.build_action(
@@ -550,7 +534,7 @@ class MainWindow(QMainWindow):
                     Icon.OVERLAY.value,
                     "Overlay Preview",
                     "Replace Editor with Preview",
-                    self.toggle_overlay_preview,
+                    toggle_overlay_preview,
                     "Ctrl+E",
                 ),
                 "Tabs": {
