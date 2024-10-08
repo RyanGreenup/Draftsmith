@@ -133,20 +133,6 @@ class MarkdownHighlighter(QSyntaxHighlighter):
                 self.setFormat(index, length, format)
 
 
-class DarkModeButton(QPushButton):
-    dark_mode_toggled = pyqtSignal(bool)
-
-    def __init__(self):
-        super().__init__("Toggle Dark Mode (Ctrl+D)")
-        self.setCheckable(True)
-        self.clicked.connect(self.toggle_dark_mode)
-        self.dark_mode = False
-
-    def toggle_dark_mode(self):
-        self.dark_mode = not self.dark_mode
-        self.dark_mode_toggled.emit(self.dark_mode)
-
-
 class MarkdownEditor(QWidget):
     """A QWidget containing a Markdown editor with toggleable live preview.
 
@@ -232,26 +218,6 @@ class MarkdownEditor(QWidget):
             self.preview.setHtml(markdown_content.build_html())
 
 
-class PreviewAction(QAction):
-    def __init__(self, markdown_editor):
-        super().__init__(
-            QIcon("icons/magnifier.png"), "Toggle Preview", markdown_editor
-        )
-        self.setStatusTip("Toggle Side by Side Preview")
-        self.triggered.connect(markdown_editor.toggle_preview)
-        self.setShortcut("Alt+G")
-        self.setCheckable(True)
-
-
-class DarkModeAction(QAction):
-    def __init__(self, main_window):
-        super().__init__(QIcon("icons/lightning.png"), "Dark Mode", main_window)
-        self.setStatusTip("Toggle Side by Side Preview")
-        self.triggered.connect(main_window.toggle_app_dark_mode)
-        self.setShortcut("Alt+D")
-        self.setCheckable(True)
-
-
 class Icon(Enum):
     PREVIEW = "icons/magnifier.png"
     OVERLAY = "icons/switch.png"
@@ -282,15 +248,6 @@ class MainWindow(QMainWindow):
 
         # Create the first tab
         self.new_tab()
-
-        # Initialize the dark mode button
-        self.dark_mode_button = DarkModeButton()
-
-        # Connect dark mode toggle signal
-        self.dark_mode_button.dark_mode_toggled.connect(self.toggle_app_dark_mode)
-
-        # Setup shortcuts
-        self.setup_shortcuts()
 
         # Create a Toolbar
         self.create_toolbar()
@@ -463,6 +420,11 @@ class MainWindow(QMainWindow):
             if current_editor:
                 current_editor.toggle_preview_overlay()
 
+        def toggle_preview():
+            current_editor = self.tab_widget.currentWidget()
+            if current_editor:
+                current_editor.toggle_preview()
+
         menu_dict = {
             "File": {
                 "new_tab": self.build_action(
@@ -523,12 +485,15 @@ class MainWindow(QMainWindow):
                     "Dark Mode",
                     "Toggle Dark Mode",
                     self.toggle_app_dark_mode,
-                    "Alt+D",
+                    "Ctrl+D",
+                    True,
                 ),
-                "preview": PreviewAction(
-                    self.tab_widget.currentWidget()
-                    if self.tab_widget.count() > 0
-                    else None
+                "preview": self.build_action(
+                    Icon.OVERLAY.value,
+                    "Toggle Preview",
+                    "Hide Preview",
+                    toggle_preview,
+                    "Ctrl+G",
                 ),
                 "overlay": self.build_action(
                     Icon.OVERLAY.value,
@@ -592,7 +557,6 @@ class MainWindow(QMainWindow):
 
         main_menu = self.menuBar()
 
-
         self.create_menus_from_structure(menu_dict, main_menu)
 
         # Collect actions from the menu structure
@@ -618,11 +582,13 @@ class MainWindow(QMainWindow):
         description: str,
         callback: Callable,
         shortcut_key: str | None,
+        checkable: bool = False,
     ) -> QAction:
         name = "&" + name  # Add an accelerator key (i.e. a Mnemonic)
         action = QAction(QIcon(icon), name, self)
         action.setStatusTip(description)
         action.triggered.connect(callback)
+        action.setCheckable(checkable)
         if shortcut_key:
             action.setShortcut(shortcut_key)
         return action
@@ -681,22 +647,6 @@ class MainWindow(QMainWindow):
             markdown_editor.dark_mode = is_dark
             markdown_editor.editor.set_dark_mode(is_dark)
             markdown_editor.update_preview()
-
-    def setup_shortcuts(self):
-        # Toggle Preview shortcut
-        toggle_preview_shortcut = QShortcut(QKeySequence("Ctrl+G"), self)
-        toggle_preview_shortcut.activated.connect(self.toggle_preview)
-
-        # Toggle Dark Mode shortcut
-        toggle_dark_mode_shortcut = QShortcut(QKeySequence("Ctrl+D"), self)
-        toggle_dark_mode_shortcut.activated.connect(
-            self.dark_mode_button.toggle_dark_mode
-        )
-
-    def toggle_preview(self):
-        current_editor = self.tab_widget.currentWidget()
-        if current_editor:
-            current_editor.toggle_preview()
 
     def open_command_palette(self):
         self.command_palette.show()
