@@ -1,7 +1,9 @@
 from pygments.formatters import HtmlFormatter
 import markdown
+import os
 from pathlib import Path
 import re
+from markdown.extensions.wikilinks import WikiLinkExtension
 
 INLINE_MATH_PATTERN = re.compile(r"\$(.+?)\$")
 BLOCK_MATH_PATTERN = re.compile(r"\$\$([\s\S]+?)\$\$")
@@ -44,6 +46,8 @@ class Markdown:
                 "pymdownx.blocks.details",
                 "admonition",
                 "toc",
+                # TODO Make base_url configurable to share between preview and editor
+                WikiLinkExtension(base_url=os.getcwd(), end_url=".md"),
             ],
             extension_configs={
                 "codehilite": {
