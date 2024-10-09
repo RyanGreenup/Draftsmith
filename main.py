@@ -344,7 +344,8 @@ class MainWindow(QMainWindow):
             os.chdir(directory)
         else:
             directory = QFileDialog.getExistingDirectory(self, "Select Directory")
-            os.chdir(directory)
+            if directory:
+                os.chdir(directory)
         self.files_palette.clear_items()
 
     def toggle_autorevert(self):
