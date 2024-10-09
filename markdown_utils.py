@@ -117,17 +117,11 @@ class Markdown:
         css_styles = self.build_css()
         content_editable_attr = 'contenteditable="true"' if content_editable else ""
 
-        # Add dark mode styles for KaTeX
-        katex_dark_mode_styles = (
-            """
+        katex_dark_mode_styles = """
         .katex { color: #d4d4d4; }
-        """
-            if self.dark_mode
-            else ""
-        )
+        """ if self.dark_mode else ""
 
-        # TODO: Candidate for config item
-        katex_min_css, katex_min_js, auto_render_min_js = get_katex_html(local=True)
+        katex_min_css, katex_min_js, auto_render_min_js = get_katex_html(local=local_katex)
 
         html = f"""
         <!DOCTYPE html>
@@ -169,30 +163,24 @@ def install_katex():
     os.chdir(current_dir)
 
 
-def get_katex_html(local: bool = True) -> str:
+def get_katex_html(local: bool = True) -> tuple[str, str, str]:
     if local:
-        pass
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        katex_min_css = (
-            f"file://{dir_path}/assets/node_modules/katex/dist/katex.min.css"
+        with open(f"{dir_path}/assets/node_modules/katex/dist/katex.min.css", "r") as f:
+            katex_min_css = f.read()
+        with open(f"{dir_path}/assets/node_modules/katex/dist/katex.min.js", "r") as f:
+            katex_min_js = f.read()
+        with open(f"{dir_path}/assets/node_modules/katex/dist/contrib/auto-render.min.js", "r") as f:
+            auto_render_min_js = f.read()
+        
+        return (
+            f"<style>{katex_min_css}</style>",
+            f"<script>{katex_min_js}</script>",
+            f"<script>{auto_render_min_js}</script>"
         )
-        katex_min_js = f"file://{dir_path}/assets/node_modules/katex/dist/katex.min.js"
-        auto_render_min_js = f"file://{dir_path}/assets/node_modules/katex/dist/contrib/auto-render.min.js"
     else:
         url = "https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/"
-
-        katex_min_css = f"{url}katex.min.css"
-        katex_min_js = f"{url}katex.min.js"
-        auto_render_min_js = f"{url}contrib/auto-render.min.js"
-
-    katex_min_css = (
-        f'<link rel="stylesheet" href="{katex_min_css}" crossorigin="anonymous">'
-    )
-    katex_min_js = (
-        f'<script defer src="{katex_min_js}" crossorigin="anonymous"></script>'
-    )
-    auto_render_min_js = (
-        f'<script defer src="{auto_render_min_js}" crossorigin="anonymous"></script>'
-    )
-
-    return katex_min_css, katex_min_js, auto_render_min_js
+        katex_min_css = f'<link rel="stylesheet" href="{url}katex.min.css" crossorigin="anonymous">'
+        katex_min_js = f'<script defer src="{url}katex.min.js" crossorigin="anonymous"></script>'
+        auto_render_min_js = f'<script defer src="{url}contrib/auto-render.min.js" crossorigin="anonymous"></script>'
+        return katex_min_css, katex_min_js, auto_render_min_js

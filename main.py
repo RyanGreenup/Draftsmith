@@ -151,16 +151,15 @@ class MarkdownEditor(QWidget):
 
     overlay_toggled = pyqtSignal(bool)
 
-    def __init__(self, css_file=None, base_url=None, loosen_web_security=False):
+    def __init__(self, css_file=None, base_url=None, local_katex=True):
         super().__init__()
         self.css_file = css_file
         self.dark_mode = False
         self.preview_visible = True
         self.preview_overlay = False
         self.base_url = base_url or QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
+        self.local_katex = local_katex
         self.setup_ui()
-        if loosen_web_security:
-            self.set_web_security_policies()
 
     def set_web_security_policies(self):
         """
@@ -239,8 +238,7 @@ class MarkdownEditor(QWidget):
             markdown_content = Markdown(
                 text=text, css_path=self.css_file, dark_mode=self.dark_mode
             )
-            html = markdown_content.build_html()
-
+            html = markdown_content.build_html(local_katex=self.local_katex)
             self.preview.setHtml(html, self.base_url)
 
 
@@ -277,6 +275,9 @@ class MainWindow(QMainWindow):
         # Create a QTabWidget
         self.tab_widget = QTabWidget()
         self.setCentralWidget(self.tab_widget)
+
+        # Set local_katex option
+        self.local_katex = True  # You can make this a configurable option
 
         # Create the first tab
         self.new_tab()
@@ -340,8 +341,7 @@ class MainWindow(QMainWindow):
     def new_tab(self):
         # Create a new MarkdownEditor
         base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
-        # TODO: Web Security is a candidate for config Options
-        markdown_editor = MarkdownEditor(css_file=args.css, base_url=base_url, loosen_web_security=True)
+        markdown_editor = MarkdownEditor(css_file=args.css, base_url=base_url, local_katex=self.local_katex)
 
         # Add the new MarkdownEditor to a new tab
         tab_title = f"Untitled {self.tab_widget.count() + 1}"
