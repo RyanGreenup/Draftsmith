@@ -1,4 +1,5 @@
 from enum import Enum
+from pallete import OpenFilePalette
 import os
 from pallete import CommandPalette
 from typing import Callable
@@ -224,6 +225,7 @@ class Icon(Enum):
     NEW_TAB = "icons/plus-octagon.png"
     CLOSE_TAB = "icons/cross-octagon.png"
     OPEN = "icons/folder-open.png"
+    OPEN_DIR = "./icons/drawer-open.png"
     SAVE = "icons/disk.png"
     REVERT = "icons/arrow-circle-315.png"
     AUTOSAVE = "icons/clock-moon-phase.png"
@@ -337,6 +339,13 @@ class MainWindow(QMainWindow):
         for file_path in file_paths:
             self.open_file(file_path)
 
+    def set_directory(self, directory=None):
+        if directory:
+            os.chdir(directory)
+        else:
+            directory = QFileDialog.getExistingDirectory(self, "Select Directory")
+            os.chdir(directory)
+
     def toggle_autorevert(self):
         self.autorevert_enabled = not self.autorevert_enabled
         if self.autorevert_enabled:
@@ -448,6 +457,13 @@ class MainWindow(QMainWindow):
                     lambda: self.open_file(None),
                     "Ctrl+O",
                 ),
+                "Set Directory": self.build_action(
+                    Icon.OPEN_DIR.value,
+                    "Set Directory",
+                    "Set the current directory",
+                    self.set_directory,
+                    "Ctrl+Shift+O",
+                    ),
                 "save": self.build_action(
                     Icon.SAVE.value,
                     "Save",
@@ -507,6 +523,13 @@ class MainWindow(QMainWindow):
                     "Command Palette",
                     "Open the command palette",
                     self.open_command_palette,
+                    "Ctrl+Shift+P",
+                ),
+                "Files Pallete": self.build_action(
+                    Icon.PALLETE.value,
+                    "Files Palette",
+                    "Open the Files palette",
+                    self.open_files_palette,
                     "Ctrl+P",
                 ),
                 "Tabs": {
@@ -562,8 +585,12 @@ class MainWindow(QMainWindow):
         # Collect actions from the menu structure
         self.actions = self.collect_actions_from_menu(menu_dict)
 
+        # Palettes
         # Create command palette
         self.command_palette = CommandPalette(self.actions)
+        self.files_palette = OpenFilePalette(self)
+
+
 
     def collect_actions_from_menu(self, menu_dict):
         actions = []
@@ -651,6 +678,9 @@ class MainWindow(QMainWindow):
     def open_command_palette(self):
         self.command_palette.open()
 
+    def open_files_palette(self):
+        self.files_palette.open()
+
     def collect_actions_from_menu(self, menu_dict):
         actions = []
         for value in menu_dict.values():
@@ -664,6 +694,9 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Markdown Editor with Preview")
     parser.add_argument(
+        "--dir", type=str, help="Directory to Set as the Current Directory"
+    )
+    parser.add_argument(
         "--css", type=str, help="Path to a CSS file for the markdown preview"
     )
     parser.add_argument(
@@ -674,6 +707,10 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Get realpath for css
+    if args.css:
+        args.css = Path(args.css).resolve()
+
     app = QApplication(sys.argv)
     window = MainWindow()
 
@@ -682,6 +719,9 @@ if __name__ == "__main__":
 
     if args.autosave:
         window.toggle_autosave()
+
+    if args.dir:
+        window.set_directory(args.dir)
 
     window.show()
     sys.exit(app.exec())

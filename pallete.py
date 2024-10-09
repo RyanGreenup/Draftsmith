@@ -1,11 +1,11 @@
 import os
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QDialog,
     QLineEdit,
     QListWidget,
     QVBoxLayout,
     QListWidgetItem,
-    QAction,
 )
 from PyQt6.QtCore import Qt, QEvent
 
@@ -37,8 +37,18 @@ class Palette(QDialog):
         # Set a Fixed Size
         self.setFixedSize(*size)
 
+        # Check if it's been populated
+        self.populated = False
+
     def populate_items(self):
         raise NotImplementedError("Subclasses must implement populate_items method")
+
+    def clear_items(self):
+        self.list_widget.clear()
+
+    def repopulate_items(self):
+        self.clear_items()
+        self.populate_items()
 
     def filter_items(self, text):
         for index in range(self.list_widget.count()):
@@ -84,11 +94,15 @@ class Palette(QDialog):
                 return
             next_row += direction
 
-    def open(self):
+    def open(self, refresh: bool = False):
         self.show()
         self.search_bar.setFocus()
         self.search_bar.clear()
-        self.populate_items()
+        if not self.populated:
+            self.populate_items()
+            self.populated = True
+        if refresh:
+            self.repopulate_items()
 
 class CommandPalette(Palette):
     def __init__(self, actions):
@@ -141,6 +155,13 @@ class OpenFilePalette(Palette):
 
         # Highlight the first item
         self.highlight_first_item()
+
+    def clear_items(self):
+        self.list_widget.clear()
+
+    def repopulate_items(self):
+        self.clear_items()
+        self.populate_items()
 
     def execute_item(self, item):
         file_path = item.data(Qt.ItemDataRole.UserRole)
