@@ -218,7 +218,9 @@ class MarkdownEditor(QWidget):
             )
             html = markdown_content.build_html()
             # NOTE set base_url for Image preview to work
-            base_url = QUrl.fromLocalFile(os.getcwd())
+            # NOTE must have trailing slash
+            base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
+            print(f"Base URL: {base_url}")
             self.preview.setHtml(html, base_url)
 
 
