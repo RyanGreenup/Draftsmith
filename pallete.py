@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QListWidgetItem,
 )
-from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtCore import QUrl, Qt, QEvent
 
 from markdown_utils import Markdown
 import sys
@@ -249,7 +249,11 @@ class OpenFilePalette(Palette):
                 # TODO dark mode
                 dark_mode=False,
             )
-            self.preview.setHtml(self.markdown_content.build_html())
+            # Set Base Path so Images are loaded correctly
+            # NOTE, base_path ==> requires remote access on preview for remote katex
+            base_path = QUrl.fromLocalFile(os.path.dirname(os.path.abspath(item_data)) + os.sep)
+            self.preview.setHtml(self.markdown_content.build_html(), base_path)
+            print(base_path)
 
     def populate_items(self):
         self.items.clear()
