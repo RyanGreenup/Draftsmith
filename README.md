@@ -29,10 +29,14 @@ Draftsmith is a markdown editor with a focus on simplicity a native feel and goo
 <tbody>
 <tr class="odd">
 <td>
+
 ![](./screenshot.png)
+
 </td>
 <td>
+
 ![](./screenshot_dark.png)
+
 </td>
 </tr>
 </tbody>
