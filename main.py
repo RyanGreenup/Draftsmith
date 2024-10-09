@@ -345,6 +345,7 @@ class MainWindow(QMainWindow):
         else:
             directory = QFileDialog.getExistingDirectory(self, "Select Directory")
             os.chdir(directory)
+        self.files_palette.clear_items()
 
     def toggle_autorevert(self):
         self.autorevert_enabled = not self.autorevert_enabled
@@ -463,7 +464,7 @@ class MainWindow(QMainWindow):
                     "Set the current directory",
                     self.set_directory,
                     "Ctrl+Shift+O",
-                    ),
+                ),
                 "save": self.build_action(
                     Icon.SAVE.value,
                     "Save",
@@ -589,8 +590,6 @@ class MainWindow(QMainWindow):
         # Create command palette
         self.command_palette = CommandPalette(self.actions)
         self.files_palette = OpenFilePalette(self)
-
-
 
     def collect_actions_from_menu(self, menu_dict):
         actions = []

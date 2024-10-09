@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QDialog,
@@ -8,6 +9,7 @@ from PyQt6.QtWidgets import (
     QListWidgetItem,
 )
 from PyQt6.QtCore import Qt, QEvent
+
 
 class Palette(QDialog):
     def __init__(self, title="Palette", size=(400, 300)):
@@ -45,6 +47,7 @@ class Palette(QDialog):
 
     def clear_items(self):
         self.list_widget.clear()
+        self.populated = False
 
     def repopulate_items(self):
         self.clear_items()
@@ -104,6 +107,7 @@ class Palette(QDialog):
         if refresh:
             self.repopulate_items()
 
+
 class CommandPalette(Palette):
     def __init__(self, actions):
         super().__init__(title="Command Palette")
@@ -128,7 +132,9 @@ class CommandPalette(Palette):
         for action in self.actions:
             lab = f"{action.text().replace('&', ''):<{max_length}}     ({action.shortcut().toString()})"
             item = QListWidgetItem(lab)  # Use action text for display
-            item.setData(Qt.ItemDataRole.UserRole, action)  # Store the actual action in the item
+            item.setData(
+                Qt.ItemDataRole.UserRole, action
+            )  # Store the actual action in the item
             self.list_widget.addItem(item)
 
         # Highlight the first item
@@ -140,6 +146,7 @@ class CommandPalette(Palette):
             action.trigger()  # Execute the action
         self.close()
 
+
 class OpenFilePalette(Palette):
     def __init__(self, main_window):
         super().__init__(title="Open File")
@@ -147,17 +154,20 @@ class OpenFilePalette(Palette):
 
     def populate_items(self):
         current_dir = os.getcwd()
-        for file in os.listdir(current_dir):
-            if os.path.isfile(os.path.join(current_dir, file)):
+        # Glob Directories
+        files = Path(current_dir).rglob("*.md")
+        files = [file.relative_to(current_dir) for file in files]
+        files = [str(file) for file in files]
+
+        # Add the Files
+        for file in files:
+            if os.path.isfile(file):
                 item = QListWidgetItem(file)
-                item.setData(Qt.ItemDataRole.UserRole, os.path.join(current_dir, file))
+                item.setData(Qt.ItemDataRole.UserRole, file)
                 self.list_widget.addItem(item)
 
         # Highlight the first item
         self.highlight_first_item()
-
-    def clear_items(self):
-        self.list_widget.clear()
 
     def repopulate_items(self):
         self.clear_items()
@@ -168,5 +178,3 @@ class OpenFilePalette(Palette):
         if file_path:
             self.main_window.open_file(file_path)
         self.close()
-
-
