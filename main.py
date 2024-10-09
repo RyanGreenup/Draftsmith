@@ -244,6 +244,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Markdown Editor with Preview")
         self.resize(800, 600)
 
+        # TODO use this css moving forward
+        self.css_path = args.css
+        self.store_css_content()
+
         # Create a QTabWidget
         self.tab_widget = QTabWidget()
         self.setCentralWidget(self.tab_widget)
@@ -269,6 +273,10 @@ class MainWindow(QMainWindow):
 
         # Connect tab change signal
         self.tab_widget.currentChanged.connect(self.update_current_tab_actions)
+
+    def store_css_content(self):
+        with open(self.css_path, "r") as file:
+            self.css_content = file.read()
 
     # TODO Remove this?
     def update_current_tab_actions(self):
@@ -344,7 +352,8 @@ class MainWindow(QMainWindow):
             os.chdir(directory)
         else:
             directory = QFileDialog.getExistingDirectory(self, "Select Directory")
-            os.chdir(directory)
+            if directory:
+                os.chdir(directory)
         self.files_palette.clear_items()
 
     def toggle_autorevert(self):
