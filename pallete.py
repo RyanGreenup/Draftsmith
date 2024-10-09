@@ -4,12 +4,13 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QVBoxLayout,
     QListWidgetItem,
-)
+    )
 from PyQt6.QtCore import (
     Qt,
     QEvent,
 )
 import sys
+
 
 
 class CommandPalette(QDialog):
@@ -125,3 +126,5 @@ class CommandPalette(QDialog):
         self.show()
         self.search_bar.setFocus()
         self.search_bar.clear()
+
+
