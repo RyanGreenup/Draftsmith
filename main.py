@@ -507,7 +507,7 @@ class MainWindow(QMainWindow):
                     "Insert a link",
                     self.open_link_palette,
                     "Ctrl+K",
-                    ),
+                ),
                 "autosave": self.build_action(
                     Icon.AUTOSAVE.value,
                     "Toggle AutoSave",

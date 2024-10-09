@@ -269,6 +269,7 @@ class OpenFilePalette(Palette):
             self.main_window.open_file(file_path)
         self.close()
 
+
 class OpenLinkPalette(OpenFilePalette):
     def __init__(self, main_window):
         super().__init__(main_window)
@@ -279,7 +280,6 @@ class OpenLinkPalette(OpenFilePalette):
         if file_path:
             self.main_window.insert_text(f"[{file_path}]({file_path})")
         self.close()
-
 
 
 def fzy_dist(s1: str, s2: str) -> float:
