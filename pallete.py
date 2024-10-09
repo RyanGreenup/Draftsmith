@@ -119,16 +119,15 @@ class Palette(QDialog):
 
     def eventFilter(self, obj, event):
         if obj == self.search_bar and event.type() == QEvent.Type.KeyPress:
-            key = event.key()
-            modifiers = event.modifiers()
-            
-            if key == Qt.Key.Key_Up or (key == Qt.Key.Key_P and modifiers == Qt.KeyboardModifier.ControlModifier):
+            direction_keys = DirectionKeys(event)
+
+            if direction_keys.up():
                 self.move_selection(-1)
                 return True
-            elif key == Qt.Key.Key_Down or (key == Qt.Key.Key_N and modifiers == Qt.KeyboardModifier.ControlModifier):
+            elif direction_keys.down():
                 self.move_selection(1)
                 return True
-            elif key == Qt.Key.Key_Enter or key == Qt.Key.Key_Return:
+            elif direction_keys.select():
                 current_item = self.list_widget.currentItem()
                 if current_item:
                     self.execute_item(current_item)
@@ -146,6 +145,27 @@ class Palette(QDialog):
                 self.list_widget.setCurrentItem(item)
                 self.list_widget.scrollToItem(item)
                 break
+
+
+class DirectionKeys:
+    def __init__(self, event):
+        self.key = event.key()
+        self.modifiers = event.modifiers()
+
+    def up(self) -> bool:
+        return self.key == Qt.Key.Key_Up or (
+            self.key == Qt.Key.Key_P
+            and self.modifiers == Qt.KeyboardModifier.ControlModifier
+        )
+
+    def down(self) -> bool:
+        return self.key == Qt.Key.Key_Down or (
+            self.key == Qt.Key.Key_N
+            and self.modifiers == Qt.KeyboardModifier.ControlModifier
+        )
+
+    def select(self) -> bool:
+        return self.key == Qt.Key.Key_Enter or self.key == Qt.Key.Key_Return
 
 
 class CommandPalette(Palette):
@@ -261,7 +281,8 @@ def fzy_sort(values: list[str], displays: list[str], text: str) -> list[str] | N
     if not values:
         return None
 
-    def sort_func(x): return fzy_dist(x[0], text)
+    def sort_func(x):
+        return fzy_dist(x[0], text)
 
     sorted_values = sorted(zip(values, displays), key=sort_func, reverse=True)
     sorted_values = [value for value, _ in sorted_values]
