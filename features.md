@@ -34,3 +34,26 @@
 - [ ] Handle broken symlinks
 - [ ] Consider storing the katex as an attribute to reduce load times
     - Store the entire html skeleton in the preview or Markdown object
+- WYSIWYM
+    - Permit Toggleable:
+        - Inline Images in the editor
+        - Inline Math for all equations (not just popup)
+    - Enter on a link should open that link in the same way that a hyperlink does
+- Opening Links
+    - Links should first check to see if a tab is already open with that target
+    - Behaviour should be shared between WYSIWYM and Clicking the link in the preview
+    - Insert
+        - Handle Relative links from the current focused page :(
+- More markdown extensions
+    - [Library Reference — Python-Markdown 3.7 documentation](https://python-markdown.github.io/reference/#markdown)
+    - [Extensions — Python-Markdown 3.7 documentation](https://python-markdown.github.io/extensions/)
+    - [Markdown in HTML — Python-Markdown 3.7 documentation](https://python-markdown.github.io/extensions/md_in_html/)
+    - [Footnotes — Python-Markdown 3.7 documentation](https://python-markdown.github.io/extensions/footnotes/)
+    - [Attribute Lists — Python-Markdown 3.7 documentation](https://python-markdown.github.io/extensions/attr_list/)
+    - [Arithmatex - PyMdown Extensions Documentation](https://facelessuser.github.io/pymdown-extensions/extensions/arithmatex/)
+
+- Treesitter not Regex
+- Wikilinks
+- Remember split after following links
+- Visit Tab instead
+- As it stands index.md doesn't work.

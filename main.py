@@ -4,6 +4,7 @@ import os
 from pallete import CommandPalette, OpenLinkPalette, OpenFilePalette
 from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
+from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
 from markdown_utils import Markdown, set_web_security_policies
 from PyQt6.QtCore import QSize, QUrl, Qt
@@ -152,7 +153,12 @@ class MarkdownEditor(QWidget):
     overlay_toggled = pyqtSignal(bool)
 
     def __init__(
-        self, css_file=None, base_url=None, local_katex=True, allow_remote_content=True
+        self,
+        css_file=None,
+        base_url=None,
+        local_katex=True,
+        allow_remote_content=True,
+        open_file_callback=None,  # Add this parameter
     ):
         super().__init__()
         self.css_file = css_file
@@ -163,6 +169,7 @@ class MarkdownEditor(QWidget):
             os.path.join(os.getcwd() + os.path.sep)
         )
         self.local_katex = local_katex
+        self.open_file_callback = open_file_callback  # Store the callback
         self.setup_ui()
 
         # NOTE Must allow external content for remote content with a base_url set
@@ -173,6 +180,14 @@ class MarkdownEditor(QWidget):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
         self.preview = QWebEngineView()
+
+        # Set up the custom page with the callback and base directory
+        self.preview_page = PreviewPage(
+            parent=self.preview,
+            open_file_callback=self.open_file_callback,
+            base_dir=self.base_url.toLocalFile(),
+        )
+        self.preview.setPage(self.preview_page)
 
         # Create a splitter to divide editor and preview
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -343,6 +358,7 @@ class MainWindow(QMainWindow):
             base_url=base_url,
             local_katex=self.local_katex,
             allow_remote_content=not args.disable_remote_content,
+            open_file_callback=self.open_file,  # Pass the open_file method as a callback
         )
 
         # Add the new MarkdownEditor to a new tab
@@ -757,6 +773,26 @@ class MainWindow(QMainWindow):
                 actions.append(value)
         return actions
 
+
+class PreviewPage(QWebEnginePage):
+    def __init__(self, parent=None, open_file_callback=None, base_dir=None):
+        super().__init__(parent)
+        self.open_file_callback = open_file_callback
+        self.base_dir = base_dir or os.getcwd()
+
+    def acceptNavigationRequest(self, url, type, isMainFrame):
+        if type == QWebEnginePage.NavigationType.NavigationTypeLinkClicked:
+            href = url.toString()
+            # Convert relative URLs to absolute paths
+            if not url.isLocalFile():
+                href = os.path.abspath(os.path.join(self.base_dir, href))
+            else:
+                href = url.toLocalFile()
+            if href and os.path.isfile(href):
+                if self.open_file_callback:
+                    self.open_file_callback(href)
+                return False  # Prevent the webview from navigating to the link
+        return super().acceptNavigationRequest(url, type, isMainFrame)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Markdown Editor with Preview")
