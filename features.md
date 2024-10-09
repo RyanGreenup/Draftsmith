@@ -5,6 +5,9 @@
           - Preview file in a splitter
       - Open Buffers
 - [ ] Preview Images
+- Katex
+    - [ ] Include a local copy of the javascript
+    - Convert the math environments to an SVG separately to reduce dependence
   - Features
       - Recall the last Palette
 - Follow Links
