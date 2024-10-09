@@ -150,12 +150,13 @@ class MarkdownEditor(QWidget):
 
     overlay_toggled = pyqtSignal(bool)
 
-    def __init__(self, css_file=None):
+    def __init__(self, css_file=None, base_url=None):
         super().__init__()
         self.css_file = css_file
         self.dark_mode = False
         self.preview_visible = True
         self.preview_overlay = False
+        self.base_url = base_url or QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
         self.setup_ui()
 
     def setup_ui(self):
@@ -180,6 +181,9 @@ class MarkdownEditor(QWidget):
 
         # Connect the Editor with the Preview
         self.editor.textChanged.connect(self.update_preview)
+
+        # Set initial content for the preview
+        self.update_preview()
 
     def build_layout(self):
         # Todo put these side by side
@@ -217,11 +221,7 @@ class MarkdownEditor(QWidget):
                 text=text, css_path=self.css_file, dark_mode=self.dark_mode
             )
             html = markdown_content.build_html()
-            # NOTE set base_url for Image preview to work
-            # NOTE must have trailing slash
-            base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
-            print(f"Base URL: {base_url}")
-            self.preview.setHtml(html, base_url)
+            self.preview.setHtml(html, self.base_url)
 
 
 class Icon(Enum):
@@ -319,7 +319,8 @@ class MainWindow(QMainWindow):
 
     def new_tab(self):
         # Create a new MarkdownEditor
-        markdown_editor = MarkdownEditor(css_file=args.css)
+        base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
+        markdown_editor = MarkdownEditor(css_file=args.css, base_url=base_url)
 
         # Add the new MarkdownEditor to a new tab
         tab_title = f"Untitled {self.tab_widget.count() + 1}"
@@ -367,6 +368,14 @@ class MainWindow(QMainWindow):
             directory = QFileDialog.getExistingDirectory(self, "Select Directory")
             if directory:
                 os.chdir(directory)
+        
+        # Update base_url for all tabs
+        base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
+        for i in range(self.tab_widget.count()):
+            editor = self.tab_widget.widget(i)
+            editor.base_url = base_url
+            editor.update_preview()
+        
         self.files_palette.clear_items()
 
     def toggle_autorevert(self):
