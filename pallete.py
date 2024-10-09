@@ -93,15 +93,25 @@ class Palette(QDialog):
             list_item.setData(Qt.ItemDataRole.UserRole, item)
             self.list_widget.addItem(list_item)
 
-    def filter_items(self, text):
-        if not text:
-            self.filtered_items = self.items.copy()
+    def _filter_items(self, text, fuzzy=False):
+        if fuzzy:
+            if not text:
+                self.filtered_items = self.items.copy()
+            else:
+                displays = [self.get_display_text(item).lower() for item in self.items]
+                self.filtered_items = fzy_sort(self.items, displays, text.lower())
         else:
-            displays = [self.get_display_text(item).lower() for item in self.items]
-            self.filtered_items = fzy_sort(self.items, displays, text.lower())
+            self.filtered_items = [
+                item for item in self.items
+                if text.lower() in self.get_display_text(item).lower()
+            ]
 
         self._update_list_widget()
         self.highlight_first_item()
+
+    def filter_items(self, text):
+        self._filter_items(text)
+
 
     def get_display_text(self, item):
         # To be overridden by subclasses if necessary
@@ -199,6 +209,9 @@ class OpenFilePalette(Palette):
 
         self.main_layout.addWidget(self.splitter)
         self.list_widget.currentItemChanged.connect(self.preview_item)
+
+    def filter_items(self, text):
+        self._filter_items(text, fuzzy=True)
 
     def preview_item(self, item):
         try:
