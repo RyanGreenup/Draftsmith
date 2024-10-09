@@ -128,11 +128,11 @@ class Markdown:
         <html>
         <head>
             <meta charset="UTF-8">
+            {katex_min_css}
             <style>
             {css_styles}
             {katex_dark_mode_styles}
             </style>
-            {katex_min_css}
         </head>
         <body {content_editable_attr}>
             {html_body}
@@ -166,11 +166,11 @@ def install_katex():
 def get_katex_html(local: bool = True) -> tuple[str, str, str]:
     if local:
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        with open(f"{dir_path}/assets/node_modules/katex/dist/katex.min.css", "r") as f:
+        with open(f"{dir_path}/assets/node_modules/katex/dist/katex.min.css", "r", encoding="utf-8") as f:
             katex_min_css = f.read()
-        with open(f"{dir_path}/assets/node_modules/katex/dist/katex.min.js", "r") as f:
+        with open(f"{dir_path}/assets/node_modules/katex/dist/katex.min.js", "r", encoding="utf-8") as f:
             katex_min_js = f.read()
-        with open(f"{dir_path}/assets/node_modules/katex/dist/contrib/auto-render.min.js", "r") as f:
+        with open(f"{dir_path}/assets/node_modules/katex/dist/contrib/auto-render.min.js", "r", encoding="utf-8") as f:
             auto_render_min_js = f.read()
         
         return (
