@@ -22,4 +22,7 @@
     - Semantic Search
 - FZF Open from Pallete
 - Image Preview
-
+- YAML Config
+    - Web Security
+    - Local KaTeX
+    - Pull Local KaTeX Automatically (if not present), Requires npm

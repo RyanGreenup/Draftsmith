@@ -8,6 +8,7 @@ from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
 from markdown_utils import Markdown
 from PyQt6.QtCore import QSize, QUrl, Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebEngineCore import QWebEngineSettings, QWebEnginePage
 from vimkeys import VimTextEdit
 from pygments.formatters import HtmlFormatter
 import markdown
@@ -150,7 +151,7 @@ class MarkdownEditor(QWidget):
 
     overlay_toggled = pyqtSignal(bool)
 
-    def __init__(self, css_file=None, base_url=None):
+    def __init__(self, css_file=None, base_url=None, loosen_web_security=False):
         super().__init__()
         self.css_file = css_file
         self.dark_mode = False
@@ -158,6 +159,24 @@ class MarkdownEditor(QWidget):
         self.preview_overlay = False
         self.base_url = base_url or QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
         self.setup_ui()
+        if loosen_web_security:
+            self.set_web_security_policies()
+
+    def set_web_security_policies(self):
+        """
+        Loosen the web security policies for the preview.
+
+        Probably not a good idea for a production application.
+        """
+
+        # Configure web settings
+        settings = self.preview.settings()
+
+        # Allow Remote Content -- required for KaTeX CDN when base_url is set.
+        settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
+
+        # Not Required for CDN -- Users can make there own decisions here
+        settings.setAttribute(QWebEngineSettings.WebAttribute.AllowRunningInsecureContent, True)
 
     def setup_ui(self):
         # Create the editor and preview widgets
@@ -221,6 +240,7 @@ class MarkdownEditor(QWidget):
                 text=text, css_path=self.css_file, dark_mode=self.dark_mode
             )
             html = markdown_content.build_html()
+
             self.preview.setHtml(html, self.base_url)
 
 
@@ -320,7 +340,8 @@ class MainWindow(QMainWindow):
     def new_tab(self):
         # Create a new MarkdownEditor
         base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
-        markdown_editor = MarkdownEditor(css_file=args.css, base_url=base_url)
+        # TODO: Web Security is a candidate for config Options
+        markdown_editor = MarkdownEditor(css_file=args.css, base_url=base_url, loosen_web_security=True)
 
         # Add the new MarkdownEditor to a new tab
         tab_title = f"Untitled {self.tab_widget.count() + 1}"
@@ -368,14 +389,14 @@ class MainWindow(QMainWindow):
             directory = QFileDialog.getExistingDirectory(self, "Select Directory")
             if directory:
                 os.chdir(directory)
-        
+
         # Update base_url for all tabs
         base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
         for i in range(self.tab_widget.count()):
             editor = self.tab_widget.widget(i)
             editor.base_url = base_url
             editor.update_preview()
-        
+
         self.files_palette.clear_items()
 
     def toggle_autorevert(self):
