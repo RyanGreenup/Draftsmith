@@ -53,50 +53,12 @@ class Palette(QDialog):
         self.clear_items()
         self.populate_items()
 
-    def filter_items(self, text):
-        for index in range(self.list_widget.count()):
-            item = self.list_widget.item(index)
-            item.setHidden(text.lower() not in item.text().lower())
-
-        self.highlight_first_item()
-
     def highlight_first_item(self):
-        for index in range(self.list_widget.count()):
-            item = self.list_widget.item(index)
-            if not item.isHidden():
-                self.list_widget.setCurrentItem(item)
-                break
+        if self.list_widget.count() > 0:
+            self.list_widget.setCurrentRow(0)
 
     def execute_item(self, item):
         raise NotImplementedError("Subclasses must implement execute_item method")
-
-    def eventFilter(self, obj, event):
-        if obj == self.search_bar and event.type() == QEvent.Type.KeyPress:
-            key = event.key()
-            if key == Qt.Key.Key_Up:
-                self.move_selection(-1)
-                return True
-            elif key == Qt.Key.Key_Down:
-                self.move_selection(1)
-                return True
-            elif key == Qt.Key.Key_Enter or key == Qt.Key.Key_Return:
-                current_item = self.list_widget.currentItem()
-                if current_item:
-                    self.execute_item(current_item)
-                return True
-        return super().eventFilter(obj, event)
-
-    def move_selection(self, direction):
-        current_row = self.list_widget.currentRow()
-        total_items = self.list_widget.count()
-        
-        for i in range(1, total_items):
-            next_row = (current_row + direction * i) % total_items
-            item = self.list_widget.item(next_row)
-            if not item.isHidden():
-                self.list_widget.setCurrentItem(item)
-                self.list_widget.scrollToItem(item)
-                break
 
     def open(self, refresh: bool = False):
         self.show()
@@ -147,16 +109,53 @@ class CommandPalette(Palette):
             action.trigger()  # Execute the action
         self.close()
 
+    def filter_items(self, text):
+        for index in range(self.list_widget.count()):
+            item = self.list_widget.item(index)
+            item.setHidden(text.lower() not in item.text().lower())
+
+        self.highlight_first_item()
+
+    def eventFilter(self, obj, event):
+        if obj == self.search_bar and event.type() == QEvent.Type.KeyPress:
+            key = event.key()
+            if key == Qt.Key.Key_Up:
+                self.move_selection(-1)
+                return True
+            elif key == Qt.Key.Key_Down:
+                self.move_selection(1)
+                return True
+            elif key == Qt.Key.Key_Enter or key == Qt.Key.Key_Return:
+                current_item = self.list_widget.currentItem()
+                if current_item:
+                    self.execute_item(current_item)
+                return True
+        return super().eventFilter(obj, event)
+
+    def move_selection(self, direction):
+        current_row = self.list_widget.currentRow()
+        total_items = self.list_widget.count()
+        
+        for i in range(1, total_items):
+            next_row = (current_row + direction * i) % total_items
+            item = self.list_widget.item(next_row)
+            if not item.isHidden():
+                self.list_widget.setCurrentItem(item)
+                self.list_widget.scrollToItem(item)
+                break
+
 
 class OpenFilePalette(Palette):
     def __init__(self, main_window):
         super().__init__(title="Open File")
         self.main_window = main_window
-        self.files = []  # Store all files
+        self.all_files = []  # Store all files
+        self.filtered_files = []  # Store filtered files
 
     def populate_items(self):
         self.list_widget.clear()
-        self.files.clear()
+        self.all_files.clear()
+        self.filtered_files.clear()
 
         current_dir = os.getcwd()
         for root, dirs, files in os.walk(current_dir):
@@ -164,15 +163,55 @@ class OpenFilePalette(Palette):
                 if file.endswith('.md'):  # Only include Markdown files
                     full_path = os.path.join(root, file)
                     relative_path = os.path.relpath(full_path, current_dir)
-                    self.files.append(relative_path)
-                    item = QListWidgetItem(relative_path)
-                    item.setData(Qt.ItemDataRole.UserRole, full_path)
-                    self.list_widget.addItem(item)
+                    self.all_files.append((relative_path, full_path))
 
+        self.filtered_files = self.all_files.copy()
+        self._update_list_widget()
+
+    def _update_list_widget(self):
+        self.list_widget.clear()
+        for relative_path, full_path in self.filtered_files:
+            item = QListWidgetItem(relative_path)
+            item.setData(Qt.ItemDataRole.UserRole, full_path)
+            self.list_widget.addItem(item)
+
+    def filter_items(self, text):
+        self.filtered_files = [
+            (relative_path, full_path)
+            for relative_path, full_path in self.all_files
+            if text.lower() in relative_path.lower()
+        ]
+        self._update_list_widget()
         self.highlight_first_item()
+
+    def move_selection(self, direction):
+        current_row = self.list_widget.currentRow()
+        total_items = self.list_widget.count()
+        if total_items == 0:
+            return
+
+        next_row = (current_row + direction) % total_items
+        self.list_widget.setCurrentRow(next_row)
+        self.list_widget.scrollToItem(self.list_widget.currentItem())
 
     def execute_item(self, item):
         file_path = item.data(Qt.ItemDataRole.UserRole)
         if file_path:
             self.main_window.open_file(file_path)
         self.close()
+
+    def eventFilter(self, obj, event):
+        if obj == self.search_bar and event.type() == QEvent.Type.KeyPress:
+            key = event.key()
+            if key == Qt.Key.Key_Up:
+                self.move_selection(-1)
+                return True
+            elif key == Qt.Key.Key_Down:
+                self.move_selection(1)
+                return True
+            elif key == Qt.Key.Key_Enter or key == Qt.Key.Key_Return:
+                current_item = self.list_widget.currentItem()
+                if current_item:
+                    self.execute_item(current_item)
+                return True
+        return super().eventFilter(obj, event)
