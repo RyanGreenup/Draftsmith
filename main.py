@@ -1,11 +1,12 @@
 from enum import Enum
+import markdown
 import os
 from pallete import CommandPalette, OpenLinkPalette, OpenFilePalette
 from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
 from markdown_utils import Markdown
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, QUrl, Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from vimkeys import VimTextEdit
 from pygments.formatters import HtmlFormatter
@@ -215,7 +216,10 @@ class MarkdownEditor(QWidget):
             markdown_content = Markdown(
                 text=text, css_path=self.css_file, dark_mode=self.dark_mode
             )
-            self.preview.setHtml(markdown_content.build_html())
+            html = markdown_content.build_html()
+            # NOTE set base_url for Image preview to work
+            base_url = QUrl.fromLocalFile(os.getcwd())
+            self.preview.setHtml(html, base_url)
 
 
 class Icon(Enum):
