@@ -1,5 +1,7 @@
 import os
+from markdown_utils import set_web_security_policies
 from pathlib import Path
+from PyQt6.QtWebEngineCore import QWebEngineSettings
 from fuzzywuzzy import fuzz
 from PyQt6.QtGui import QAction
 from PyQt6.QtWebEngineWidgets import QWebEngineView
@@ -242,18 +244,29 @@ class OpenFilePalette(Palette):
             item_data = None
         if item_data:
             with open(item_data, "r") as file:
-                content = file.read()
-            self.markdown_content = Markdown(
-                text=content,
-                css_path=self.main_window.css_path,
-                # TODO dark mode
-                dark_mode=False,
-            )
-            # Set Base Path so Images are loaded correctly
-            # NOTE, base_path ==> requires remote access on preview for remote katex
-            base_path = QUrl.fromLocalFile(os.path.dirname(os.path.abspath(item_data)) + os.sep)
-            self.preview.setHtml(self.markdown_content.build_html(), base_path)
-            print(base_path)
+                self.set_preview(file.read(), item_data)
+
+    def set_preview(self, content, item_data):
+        if self.main_window.allow_remote_content:
+            set_web_security_policies(self.preview)
+
+        self.markdown_content = Markdown(
+            text=content,
+            css_path=self.main_window.css_path,
+            # TODO dark mode
+            dark_mode=False,
+        )
+
+        # Set Base Path so Images are loaded correctly
+        # NOTE, base_path ==> requires remote access on preview for remote katex
+        # TODO should this be set to use local katex?
+        base_path = QUrl.fromLocalFile(
+            os.path.dirname(os.path.abspath(item_data)) + os.sep
+        )
+        self.preview.setHtml(
+            self.markdown_content.build_html(local_katex=self.main_window.local_katex),
+            base_path,
+        )
 
     def populate_items(self):
         self.items.clear()

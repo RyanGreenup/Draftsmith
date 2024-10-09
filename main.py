@@ -5,7 +5,7 @@ from pallete import CommandPalette, OpenLinkPalette, OpenFilePalette
 from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
-from markdown_utils import Markdown
+from markdown_utils import Markdown, set_web_security_policies
 from PyQt6.QtCore import QSize, QUrl, Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineSettings, QWebEnginePage
@@ -151,35 +151,23 @@ class MarkdownEditor(QWidget):
 
     overlay_toggled = pyqtSignal(bool)
 
-    def __init__(self, css_file=None, base_url=None, local_katex=True, allow_remote_content=True):
+    def __init__(
+        self, css_file=None, base_url=None, local_katex=True, allow_remote_content=True
+    ):
         super().__init__()
         self.css_file = css_file
         self.dark_mode = False
         self.preview_visible = True
         self.preview_overlay = False
-        self.base_url = base_url or QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
+        self.base_url = base_url or QUrl.fromLocalFile(
+            os.path.join(os.getcwd() + os.path.sep)
+        )
         self.local_katex = local_katex
         self.setup_ui()
 
         # NOTE Must allow external content for remote content with a base_url set
         if allow_remote_content:
-            self.set_web_security_policies()
-
-    def set_web_security_policies(self):
-        """
-        Loosen the web security policies for the preview.
-
-        Probably not a good idea for a production application.
-        """
-
-        # Configure web settings
-        settings = self.preview.settings()
-
-        # Allow Remote Content -- required for KaTeX CDN when base_url is set.
-        settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
-
-        # Not Required for CDN -- Users can make there own decisions here
-        settings.setAttribute(QWebEngineSettings.WebAttribute.AllowRunningInsecureContent, True)
+            set_web_security_policies(self.preview)
 
     def setup_ui(self):
         # Create the editor and preview widgets
@@ -282,7 +270,8 @@ class MainWindow(QMainWindow):
 
         # Set local_katex option
         # TODO make this a configurable option
-        self.local_katex = True
+        self.local_katex = not args.remote_katex
+        self.allow_remote_content = not args.disable_remote_content
 
         # Create the first tab
         self.new_tab()
@@ -346,7 +335,12 @@ class MainWindow(QMainWindow):
     def new_tab(self):
         # Create a new MarkdownEditor
         base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
-        markdown_editor = MarkdownEditor(css_file=args.css, base_url=base_url, local_katex=self.local_katex)
+        markdown_editor = MarkdownEditor(
+            css_file=args.css,
+            base_url=base_url,
+            local_katex=self.local_katex,
+            allow_remote_content=not args.disable_remote_content,
+        )
 
         # Add the new MarkdownEditor to a new tab
         tab_title = f"Untitled {self.tab_widget.count() + 1}"
@@ -767,6 +761,16 @@ if __name__ == "__main__":
         "--css", type=str, help="Path to a CSS file for the markdown preview"
     )
     parser.add_argument(
+        "--remote-katex",
+        action="store_true",
+        help="Use Remote KaTeX CDN instead of local NPM Module",
+    )
+    parser.add_argument(
+        "--disable-remote-content",
+        action="store_true",
+        help="Disable Remote Content in the Preview (e.g. KaTeX CDN when a base_url is set)",
+    )
+    parser.add_argument(
         "input_files", nargs="*", help="Paths to the markdown files to open"
     )
     parser.add_argument(
@@ -792,6 +796,7 @@ if __name__ == "__main__":
 
     window.show()
     sys.exit(app.exec())
+
 
 # Footnotes
 # [^1]: https://facelessuser.github.io/pymdown-extensions/extensions/blocks/plugins/details/

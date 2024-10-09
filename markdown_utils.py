@@ -1,4 +1,7 @@
+from PyQt6.QtWebEngineCore import QWebEngineSettings
+from PyQt6.QtWebEngineWidgets import QWebEngineView
 from pygments.formatters import HtmlFormatter
+import html
 import shutil
 import markdown
 import subprocess
@@ -117,11 +120,17 @@ class Markdown:
         css_styles = self.build_css()
         content_editable_attr = 'contenteditable="true"' if content_editable else ""
 
-        katex_dark_mode_styles = """
+        katex_dark_mode_styles = (
+            """
         .katex { color: #d4d4d4; }
-        """ if self.dark_mode else ""
+        """
+            if self.dark_mode
+            else ""
+        )
 
-        katex_min_css, katex_min_js, auto_render_min_js = get_katex_html(local=local_katex)
+        katex_min_css, katex_min_js, auto_render_min_js = get_katex_html(
+            local=local_katex
+        )
 
         html = f"""
         <!DOCTYPE html>
@@ -166,21 +175,54 @@ def install_katex():
 def get_katex_html(local: bool = True) -> tuple[str, str, str]:
     if local:
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        with open(f"{dir_path}/assets/node_modules/katex/dist/katex.min.css", "r", encoding="utf-8") as f:
-            katex_min_css = f.read()
-        with open(f"{dir_path}/assets/node_modules/katex/dist/katex.min.js", "r", encoding="utf-8") as f:
+        # I can't get this to work unless the style is a link
+        katex_min_css_path = f"{dir_path}/assets/node_modules/katex/dist/katex.min.css"
+        with open(
+            f"{dir_path}/assets/node_modules/katex/dist/katex.min.js",
+            "r",
+            encoding="utf-8",
+        ) as f:
             katex_min_js = f.read()
-        with open(f"{dir_path}/assets/node_modules/katex/dist/contrib/auto-render.min.js", "r", encoding="utf-8") as f:
+        with open(
+            f"{dir_path}/assets/node_modules/katex/dist/contrib/auto-render.min.js",
+            "r",
+            encoding="utf-8",
+        ) as f:
             auto_render_min_js = f.read()
-        
+
         return (
-            f"<style>{katex_min_css}</style>",
+            f'<link rel="stylesheet" href="{katex_min_css_path}" crossorigin="anonymous">',
             f"<script>{katex_min_js}</script>",
-            f"<script>{auto_render_min_js}</script>"
+            f"<script>{auto_render_min_js}</script>",
         )
     else:
         url = "https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/"
-        katex_min_css = f'<link rel="stylesheet" href="{url}katex.min.css" crossorigin="anonymous">'
-        katex_min_js = f'<script defer src="{url}katex.min.js" crossorigin="anonymous"></script>'
+        katex_min_css = (
+            f'<link rel="stylesheet" href="{url}katex.min.css" crossorigin="anonymous">'
+        )
+        katex_min_js = (
+            f'<script defer src="{url}katex.min.js" crossorigin="anonymous"></script>'
+        )
         auto_render_min_js = f'<script defer src="{url}contrib/auto-render.min.js" crossorigin="anonymous"></script>'
         return katex_min_css, katex_min_js, auto_render_min_js
+
+
+def set_web_security_policies(webview: QWebEngineView):
+    """
+    Loosen the web security policies for the preview.
+
+    Probably not a good idea for a production application.
+    """
+
+    # Configure web settings
+    settings = webview.settings()
+
+    # Allow Remote Content -- required for KaTeX CDN when base_url is set.
+    settings.setAttribute(
+        QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True
+    )
+
+    # Not Required for CDN -- Users can make there own decisions here
+    settings.setAttribute(
+        QWebEngineSettings.WebAttribute.AllowRunningInsecureContent, True
+    )
