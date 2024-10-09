@@ -94,18 +94,12 @@ class Palette(QDialog):
             self.list_widget.addItem(list_item)
 
     def filter_items(self, text):
-        # Simple Filtering
+        if not text:
+            self.filtered_items = self.items.copy()
+        else:
+            displays = [self.get_display_text(item).lower() for item in self.items]
+            self.filtered_items = fzy_sort(self.items, displays, text.lower())
 
-        # self.filtered_items = [
-        #     item for item in self.items
-        #     if text.lower() in self.get_display_text(item).lower()
-        # ]
-
-        displays = [self.get_display_text(item).lower() for item in self.items]
-        # Fuzzy Filtering
-        self.filtered_items = fzy_sort(self.items, displays, text.lower())
-
-        # Update after filtering
         self._update_list_widget()
         self.highlight_first_item()
 
@@ -148,6 +142,7 @@ class CommandPalette(Palette):
         super().__init__(title="Command Palette")
         self.actions = actions
 
+    def populate_items(self):
         # Set Monospace font
         font = self.list_widget.font()
         font.setFamily("Fira Code")  # TODO config Option
@@ -156,7 +151,6 @@ class CommandPalette(Palette):
         # Set Margins
         self.list_widget.setContentsMargins(10, 10, 10, 10)
 
-    def populate_items(self):
         # Measure Alignment of shortcut and action
         max_length = min(max(len(action.text()) for action in self.actions), 60)
 
