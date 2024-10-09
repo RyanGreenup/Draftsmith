@@ -25,4 +25,5 @@
 - YAML Config
     - Web Security
     - Local KaTeX
+        - markdown_utils.py
     - Pull Local KaTeX Automatically (if not present), Requires npm

@@ -1,5 +1,7 @@
 from pygments.formatters import HtmlFormatter
+import shutil
 import markdown
+import subprocess
 import os
 from pathlib import Path
 import re
@@ -110,7 +112,7 @@ class Markdown:
             css_styles += dark_mode_styles
         return css_styles
 
-    def build_html(self, content_editable=False) -> str:
+    def build_html(self, content_editable=False, local_katex=True) -> str:
         html_body = self.make_html()
         css_styles = self.build_css()
         content_editable_attr = 'contenteditable="true"' if content_editable else ""
@@ -124,6 +126,9 @@ class Markdown:
             else ""
         )
 
+        # TODO: Candidate for config item
+        katex_min_css, katex_min_js, auto_render_min_js = get_katex_html(local=True)
+
         html = f"""
         <!DOCTYPE html>
         <html>
@@ -133,12 +138,12 @@ class Markdown:
             {css_styles}
             {katex_dark_mode_styles}
             </style>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" crossorigin="anonymous">
+            {katex_min_css}
         </head>
         <body {content_editable_attr}>
             {html_body}
-            <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js" crossorigin="anonymous"></script>
-            <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+            {katex_min_js}
+            {auto_render_min_js}
             <script>
             document.addEventListener("DOMContentLoaded", function() {{
                 renderMathInElement(document.body, {{
@@ -153,3 +158,41 @@ class Markdown:
         </html>
         """
         return html
+
+
+def install_katex():
+    current_dir = os.getcwd()
+    os.chdir(os.path.dirname(__file__))
+    os.makedirs("assets", exist_ok=True)
+    os.chdir("assets")
+    subprocess.run(["npm", "install", "katex"], check=True)
+    os.chdir(current_dir)
+
+
+def get_katex_html(local: bool = True) -> str:
+    if local:
+        pass
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        katex_min_css = (
+            f"file://{dir_path}/assets/node_modules/katex/dist/katex.min.css"
+        )
+        katex_min_js = f"file://{dir_path}/assets/node_modules/katex/dist/katex.min.js"
+        auto_render_min_js = f"file://{dir_path}/assets/node_modules/katex/dist/contrib/auto-render.min.js"
+    else:
+        url = "https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/"
+
+        katex_min_css = f"{url}katex.min.css"
+        katex_min_js = f"{url}katex.min.js"
+        auto_render_min_js = f"{url}contrib/auto-render.min.js"
+
+    katex_min_css = (
+        f'<link rel="stylesheet" href="{katex_min_css}" crossorigin="anonymous">'
+    )
+    katex_min_js = (
+        f'<script defer src="{katex_min_js}" crossorigin="anonymous"></script>'
+    )
+    auto_render_min_js = (
+        f'<script defer src="{auto_render_min_js}" crossorigin="anonymous"></script>'
+    )
+
+    return katex_min_css, katex_min_js, auto_render_min_js
