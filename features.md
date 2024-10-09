@@ -9,7 +9,11 @@
 - Follow Links
 - Insert Links
 - Search
-    - Tantivy
+    - FTS
+        - Whoosh
+        - Tantivy
+        - DuckDB
+        - Xapian
     - Semantic Search
 - FZF Open from Pallete
 - Image Preview
