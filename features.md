@@ -1,9 +1,10 @@
 - Pallette
   - Specific Palettes
       - [X] Command
-      - Open Files
+      - [X] Open Files
           - Preview file in a splitter
       - Open Buffers
+- [ ] Preview Images
   - Features
       - Recall the last Palette
 - Follow Links

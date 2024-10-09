@@ -1,7 +1,6 @@
 from enum import Enum
-from pallete import OpenFilePalette
 import os
-from pallete import CommandPalette
+from pallete import CommandPalette, OpenLinkPalette, OpenFilePalette
 from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
@@ -220,6 +219,7 @@ class MarkdownEditor(QWidget):
 
 
 class Icon(Enum):
+    LINK = "icons/link.png"
     PREVIEW = "icons/magnifier.png"
     OVERLAY = "icons/switch.png"
     NEW_TAB = "icons/plus-octagon.png"
@@ -273,6 +273,13 @@ class MainWindow(QMainWindow):
 
         # Connect tab change signal
         self.tab_widget.currentChanged.connect(self.update_current_tab_actions)
+
+    def insert_text(self, text):
+        current_editor = self.tab_widget.currentWidget()
+        if current_editor:
+            cursor = current_editor.editor.textCursor()
+            cursor.insertText(text)
+            current_editor.editor.setTextCursor(cursor)
 
     def store_css_content(self):
         with open(self.css_path, "r") as file:
@@ -490,6 +497,13 @@ class MainWindow(QMainWindow):
                 ),
             },
             "Edit": {
+                "Insert Link": self.build_action(
+                    Icon.LINK.value,
+                    "Insert Link",
+                    "Insert a link",
+                    self.open_link_palette,
+                    "Ctrl+K",
+                    ),
                 "autosave": self.build_action(
                     Icon.AUTOSAVE.value,
                     "Toggle AutoSave",
@@ -598,6 +612,7 @@ class MainWindow(QMainWindow):
         # Palettes
         # Create command palette
         self.command_palette = CommandPalette(self.actions)
+        self.link_palette = OpenLinkPalette(self)
         self.files_palette = OpenFilePalette(self)
 
     def collect_actions_from_menu(self, menu_dict):
@@ -685,6 +700,9 @@ class MainWindow(QMainWindow):
 
     def open_command_palette(self):
         self.command_palette.open()
+
+    def open_link_palette(self):
+        self.link_palette.open()
 
     def open_files_palette(self):
         self.files_palette.open()
