@@ -16,9 +16,6 @@ Draftsmith is a markdown editor with a focus on simplicity a native feel and goo
 - Vim Bindings
   - Very basic at the moment, but I'm working on it.
 
-![](./screenshot.png)
-![](./screenshot_dark.png)
-
 <table>
 <thead>
 <tr class="header">
