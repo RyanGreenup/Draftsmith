@@ -31,3 +31,6 @@
     - Footnotes
     - Wikilinks
     -
+- [ ] Handle broken symlinks
+- [ ] Consider storing the katex as an attribute to reduce load times
+    - Store the entire html skeleton in the preview or Markdown object
