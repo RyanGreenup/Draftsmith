@@ -120,10 +120,12 @@ class Palette(QDialog):
     def eventFilter(self, obj, event):
         if obj == self.search_bar and event.type() == QEvent.Type.KeyPress:
             key = event.key()
-            if key in [Qt.Key.Key_Up, Qt.Key.Key_P | Qt.Key.Key_Control]:
+            modifiers = event.modifiers()
+            
+            if key == Qt.Key.Key_Up or (key == Qt.Key.Key_P and modifiers == Qt.KeyboardModifier.ControlModifier):
                 self.move_selection(-1)
                 return True
-            elif key == Qt.Key.Key_Down:
+            elif key == Qt.Key.Key_Down or (key == Qt.Key.Key_N and modifiers == Qt.KeyboardModifier.ControlModifier):
                 self.move_selection(1)
                 return True
             elif key == Qt.Key.Key_Enter or key == Qt.Key.Key_Return:
