@@ -7,6 +7,7 @@
   - Features
       - Recall the last Palette
 - Follow Links
+    - https://www.perplexity.ai/search/in-pyqt6-how-to-map-hyperlinks-_FfaUbMsTr.M7kak4.ZxEA
 - Insert Links
 - Search
     - FTS
@@ -17,3 +18,4 @@
     - Semantic Search
 - FZF Open from Pallete
 - Image Preview
+
