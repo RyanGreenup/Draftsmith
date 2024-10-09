@@ -1,3 +1,5 @@
+fuzzywuzzy==0.18.0
+Levenshtein==0.26.0
 Markdown==3.7
 Pygments==2.18.0
 pymdown-extensions==10.11.2
@@ -11,4 +13,6 @@ PyQt6-WebEngine-Qt6==6.7.3
 PyQt6-WebEngineSubwheel-Qt6==6.7.3
 PyQt6_sip==13.8.0
 PyQtWebEngine-Qt5==5.15.15
+python-Levenshtein==0.26.0
 PyYAML==6.0.2
+RapidFuzz==3.10.0
