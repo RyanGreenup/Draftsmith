@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from fuzzywuzzy import fuzz
 from PyQt6.QtGui import QAction
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import (
@@ -93,10 +94,18 @@ class Palette(QDialog):
             self.list_widget.addItem(list_item)
 
     def filter_items(self, text):
-        self.filtered_items = [
-            item for item in self.items
-            if text.lower() in self.get_display_text(item).lower()
-        ]
+        # Simple Filtering
+
+        # self.filtered_items = [
+        #     item for item in self.items
+        #     if text.lower() in self.get_display_text(item).lower()
+        # ]
+
+        displays = [self.get_display_text(item).lower() for item in self.items]
+        # Fuzzy Filtering
+        self.filtered_items = fzy_sort(self.items, displays, text.lower())
+
+        # Update after filtering
         self._update_list_widget()
         self.highlight_first_item()
 
@@ -235,3 +244,19 @@ class OpenFilePalette(Palette):
         self.close()
 
 
+def fzy_dist(s1: str, s2: str) -> float:
+    return fuzz.ratio(s1, s2)
+
+
+def fzy_sort(values: list[str], displays: list[str], text: str) -> list[str] | None:
+    """
+    Sort a list of strings, given a term using Levenshtein distance.
+    """
+    if not values:
+        return None
+
+    sort_func = lambda x: fzy_dist(x[0], text)
+
+    sorted_values = sorted(zip(values, displays), key=sort_func, reverse=True)
+    sorted_values = [value for value, _ in sorted_values]
+    return sorted_values
