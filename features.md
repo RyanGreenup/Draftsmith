@@ -1,4 +1,9 @@
 - Pallette
+  - Specific Palettes
+      - Command
+      - Open Files
+  - Features
+      - Recall the last Palette
 - Follow Links
 - Insert Links
 - Search
