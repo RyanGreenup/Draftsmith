@@ -1,33 +1,45 @@
 import os
 from pathlib import Path
 from PyQt6.QtGui import QAction
+from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import (
     QDialog,
     QLineEdit,
     QListWidget,
+    QSplitter,
     QVBoxLayout,
     QListWidgetItem,
 )
 from PyQt6.QtCore import Qt, QEvent
 
+from markdown_utils import Markdown
+import sys
+
+# TODO Autoselect on Command Palette
+
 
 class Palette(QDialog):
-    def __init__(self, title="Palette", size=(400, 300)):
+    def __init__(self, title="Palette", size=(400, 300), previewer=None):
         super().__init__()
         self.setWindowTitle(title)
         self.setGeometry(100, 100, *size)
 
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
+        self.main_layout = QVBoxLayout()
+        self.setLayout(self.main_layout)
 
         # Search bar
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search...")
-        self.layout.addWidget(self.search_bar)
+        self.main_layout.addWidget(self.search_bar)
 
         # List widget
         self.list_widget = QListWidget()
-        self.layout.addWidget(self.list_widget)
+
+        # Preview
+        self.preview = QWebEngineView()
+        self.preview.setHtml("")
+
+        self.main_layout.addWidget(self.list_widget)
 
         # Connect search functionality
         self.search_bar.textChanged.connect(self.filter_items)
@@ -93,7 +105,8 @@ class CommandPalette(Palette):
 
         # Add the Actions
         for action in self.actions:
-            lab = f"{action.text().replace('&', ''):<{max_length}}     ({action.shortcut().toString()})"
+            lab = f"{action.text().replace('&', ''):<{max_length}
+                     }     ({action.shortcut().toString()})"
             item = QListWidgetItem(lab)  # Use action text for display
             item.setData(
                 Qt.ItemDataRole.UserRole, action
@@ -135,7 +148,7 @@ class CommandPalette(Palette):
     def move_selection(self, direction):
         current_row = self.list_widget.currentRow()
         total_items = self.list_widget.count()
-        
+
         for i in range(1, total_items):
             next_row = (current_row + direction * i) % total_items
             item = self.list_widget.item(next_row)
@@ -145,12 +158,51 @@ class CommandPalette(Palette):
                 break
 
 
+# TODO allow a pallete for navigating directories
+# NOTE open directory should display a tree
+class OpenDirectoryPalette(Palette):
+    def __init__(self, main_window):
+        pass
+
+
 class OpenFilePalette(Palette):
     def __init__(self, main_window):
         super().__init__(title="Open File")
         self.main_window = main_window
         self.all_files = []  # Store all files
         self.filtered_files = []  # Store filtered files
+        # Adjust fixed size
+        # TODO candidate for config
+        self.setFixedSize(1600, 1000)
+
+        # Splitter
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.addWidget(self.list_widget)
+        self.splitter.addWidget(self.preview)
+        self.splitter.setSizes([300, 300])
+        self.preview.show()
+
+        self.main_layout.addWidget(self.splitter)
+        self.list_widget.currentItemChanged.connect(self.preview_item)
+
+    def preview_item(self, item):
+        try:
+            item_data = item.data(Qt.ItemDataRole.UserRole)
+        except AttributeError:
+            item_data = None
+        except Exception as e:
+            print(e, file=sys.stderr)
+            item_data = None
+        if item_data:
+            with open(item.data(Qt.ItemDataRole.UserRole), "r") as file:
+                content = file.read()
+            self.markdown_content = Markdown(
+                text=content,
+                css_path=self.main_window.css_path,
+                # TODO dark mode
+                dark_mode=False,
+            )
+            self.preview.setHtml(self.markdown_content.build_html())
 
     def populate_items(self):
         self.list_widget.clear()
@@ -160,7 +212,7 @@ class OpenFilePalette(Palette):
         current_dir = os.getcwd()
         for root, dirs, files in os.walk(current_dir):
             for file in files:
-                if file.endswith('.md'):  # Only include Markdown files
+                if file.endswith(".md"):  # Only include Markdown files
                     full_path = os.path.join(root, file)
                     relative_path = os.path.relpath(full_path, current_dir)
                     self.all_files.append((relative_path, full_path))
