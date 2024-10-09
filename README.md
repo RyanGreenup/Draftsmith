@@ -1,8 +1,20 @@
 # Draftsmith
 
-A markdown editor written with PyQt6. It implements mathematics, custom CSS, a command palette, popup previews for math and basic vim bindings.
+A markdown editor written with PyQt6.
 
-The goal is to write something with a open source with a simple code base that can be used in place of Obsidian or VSCode. [^1]
+The goal is to write something open source with a simple code base that can be used in place of Obsidian or VSCode. [^1] Motivated by Obsidian and a a love of Open Source software and a desire for inline math previews similar to [VNote](https://github.com/vnotex/vnote) or [Rstudio](https://github.com/rstudio/rstudio)
+
+## Features
+
+Draftsmith is a markdown editor with a focus on simplicity a native feel and good support for Mathematics:
+
+- Custom CSS
+- Popup previews for Math
+- Palettes
+  - Command Palette
+  - File Palette
+- Vim Bindings
+  - Very basic at the moment, but I'm working on it.
 
 ![](./screenshot.png)
 
