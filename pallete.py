@@ -253,8 +253,8 @@ class OpenFilePalette(Palette):
         self.markdown_content = Markdown(
             text=content,
             css_path=self.main_window.css_path,
-            # TODO dark mode
-            dark_mode=False,
+            # Use the main window's dark mode state
+            dark_mode=self.main_window.dark_mode,
         )
 
         # Set Base Path so Images are loaded correctly

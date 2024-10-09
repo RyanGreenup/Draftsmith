@@ -260,6 +260,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Markdown Editor with Preview")
         self.resize(800, 600)
 
+        # Initialize dark_mode attribute
+        self.dark_mode = False
+
         # TODO use this css moving forward
         self.css_path = args.css
         self.store_css_content()
@@ -725,6 +728,9 @@ class MainWindow(QMainWindow):
         else:
             app.setStyle("Fusion")
             app.setPalette(app.style().standardPalette())
+
+        # Update the dark_mode attribute
+        self.dark_mode = is_dark
 
         # Update the markdown editor's dark mode for all tabs
         for i in range(self.tab_widget.count()):
