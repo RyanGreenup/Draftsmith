@@ -24,10 +24,8 @@ class Palette(QDialog):
         self.setWindowTitle(title)
         self.setGeometry(100, 100, *size)
 
-        # Use a Filtered Items List rather than hiding so the
-        # order of the items can be changed
-        self.filtered_items: list[str] = []  # Store filtered files
-        self.all_items: list[str] = [] # Store the text of all items
+        self.items = []  # Store all items (can be strings or tuples)
+        self.filtered_items = []  # Store filtered items
 
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
@@ -89,21 +87,22 @@ class Palette(QDialog):
 
     def _update_list_widget(self):
         self.list_widget.clear()
-        for item_text in self.filtered_items:
-            item = QListWidgetItem(item_text)
-            item.setData(Qt.ItemDataRole.UserRole, item_text)
-            self.list_widget.addItem(item)
+        for item in self.filtered_items:
+            list_item = QListWidgetItem(self.get_display_text(item))
+            list_item.setData(Qt.ItemDataRole.UserRole, item)
+            self.list_widget.addItem(list_item)
 
     def filter_items(self, text):
         self.filtered_items = [
-            item_text for item_text in self.all_items
-            if text.lower() in item_text.lower()
+            item for item in self.items
+            if text.lower() in self.get_display_text(item).lower()
         ]
-
         self._update_list_widget()
         self.highlight_first_item()
 
-
+    def get_display_text(self, item):
+        # To be overridden by subclasses if necessary
+        return str(item)
 
     def eventFilter(self, obj, event):
         if obj == self.search_bar and event.type() == QEvent.Type.KeyPress:
@@ -140,8 +139,6 @@ class CommandPalette(Palette):
         super().__init__(title="Command Palette")
         self.actions = actions
 
-    def populate_items(self):
-        # MOVE to constructor
         # Set Monospace font
         font = self.list_widget.font()
         font.setFamily("Fira Code")  # TODO config Option
@@ -150,37 +147,24 @@ class CommandPalette(Palette):
         # Set Margins
         self.list_widget.setContentsMargins(10, 10, 10, 10)
 
+    def populate_items(self):
         # Measure Alignment of shortcut and action
-        # Get the Maximum Length of the Action Text
-        m = max(len(action.text()) for action in self.actions)
-        # Upper Bound of 60 char
-        max_length = min(m, 60)
+        max_length = min(max(len(action.text()) for action in self.actions), 60)
 
-
-        self.list_widget.clear()
-        self.all_items.clear()
-        self.filtered_items.clear()
-
-
-        # Add the Actions
-        # for action in self.actions:
-        #     lab = f"{action.text().replace('&', ''):<{max_length}}     ({action.shortcut().toString()})"
-        #     item = QListWidgetItem(lab)  # Use action text for display
-        #     item.setData(
-        #         Qt.ItemDataRole.UserRole, action
-        #     )  # Store the actual action in the item
-        #     self.list_widget.addItem(item)
-
-        self.all_items = [f"{action.text().replace('&', ''):<{max_length}}     ({action.shortcut().toString()})" for action in self.actions]
-
-        self.filtered_items = self.all_items.copy()
+        self.items.clear()
+        self.items = [(action, max_length) for action in self.actions]
+        self.filtered_items = self.items.copy()
         self._update_list_widget()
 
         # Highlight the first item
         self.highlight_first_item()
 
+    def get_display_text(self, item):
+        action, max_length = item
+        return f"{action.text().replace('&', ''):<{max_length}}     ({action.shortcut().toString()})"
+
     def execute_item(self, item):
-        action = item.data(Qt.ItemDataRole.UserRole)
+        action, _ = item.data(Qt.ItemDataRole.UserRole)
         if action:
             action.trigger()  # Execute the action
         self.close()
@@ -222,7 +206,7 @@ class OpenFilePalette(Palette):
             print(e, file=sys.stderr)
             item_data = None
         if item_data:
-            with open(item.data(Qt.ItemDataRole.UserRole), "r") as file:
+            with open(item_data, "r") as file:
                 content = file.read()
             self.markdown_content = Markdown(
                 text=content,
@@ -233,30 +217,16 @@ class OpenFilePalette(Palette):
             self.preview.setHtml(self.markdown_content.build_html())
 
     def populate_items(self):
-        self.list_widget.clear()
-        self.all_items.clear()  # Is this needed?
-        self.filtered_items.clear()
-
+        self.items.clear()
         current_dir = os.getcwd()
         for root, dirs, files in os.walk(current_dir):
             for file in files:
-                if file.endswith(".md"):  # Only include Markdown files
+                if file.endswith(".md"):
                     full_path = os.path.join(root, file)
                     relative_path = os.path.relpath(full_path, current_dir)
-                    self.all_items.append(relative_path)
-
-        self.filtered_items = self.all_items.copy()
+                    self.items.append(relative_path)
+        self.filtered_items = self.items.copy()
         self._update_list_widget()
-
-
-    def filter_items(self, text):
-        self.filtered_items = [
-            relative_path
-            for relative_path in self.all_items
-            if text.lower() in relative_path.lower()
-        ]
-        self._update_list_widget()
-        self.highlight_first_item()
 
     def execute_item(self, item):
         file_path = item.data(Qt.ItemDataRole.UserRole)
