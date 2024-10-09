@@ -58,7 +58,6 @@ class Palette(QDialog):
             item = self.list_widget.item(index)
             item.setHidden(text.lower() not in item.text().lower())
 
-        # Highlight the first visible item after filtering
         self.highlight_first_item()
 
     def highlight_first_item(self):
@@ -89,13 +88,15 @@ class Palette(QDialog):
 
     def move_selection(self, direction):
         current_row = self.list_widget.currentRow()
-        next_row = current_row + direction
-        while 0 <= next_row < self.list_widget.count():
+        total_items = self.list_widget.count()
+        
+        for i in range(1, total_items):
+            next_row = (current_row + direction * i) % total_items
             item = self.list_widget.item(next_row)
             if not item.isHidden():
                 self.list_widget.setCurrentItem(item)
-                return
-            next_row += direction
+                self.list_widget.scrollToItem(item)
+                break
 
     def open(self, refresh: bool = False):
         self.show()
@@ -151,27 +152,24 @@ class OpenFilePalette(Palette):
     def __init__(self, main_window):
         super().__init__(title="Open File")
         self.main_window = main_window
+        self.files = []  # Store all files
 
     def populate_items(self):
+        self.list_widget.clear()
+        self.files.clear()
+
         current_dir = os.getcwd()
-        # Glob Directories
-        files = Path(current_dir).rglob("*.md")
-        files = [file.relative_to(current_dir) for file in files]
-        files = [str(file) for file in files]
+        for root, dirs, files in os.walk(current_dir):
+            for file in files:
+                if file.endswith('.md'):  # Only include Markdown files
+                    full_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(full_path, current_dir)
+                    self.files.append(relative_path)
+                    item = QListWidgetItem(relative_path)
+                    item.setData(Qt.ItemDataRole.UserRole, full_path)
+                    self.list_widget.addItem(item)
 
-        # Add the Files
-        for file in files:
-            if os.path.isfile(file):
-                item = QListWidgetItem(file)
-                item.setData(Qt.ItemDataRole.UserRole, file)
-                self.list_widget.addItem(item)
-
-        # Highlight the first item
         self.highlight_first_item()
-
-    def repopulate_items(self):
-        self.clear_items()
-        self.populate_items()
 
     def execute_item(self, item):
         file_path = item.data(Qt.ItemDataRole.UserRole)
