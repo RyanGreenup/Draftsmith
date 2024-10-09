@@ -17,6 +17,27 @@ Draftsmith is a markdown editor with a focus on simplicity a native feel and goo
   - Very basic at the moment, but I'm working on it.
 
 ![](./screenshot.png)
+![](./screenshot_dark.png)
+
+<table>
+<thead>
+<tr class="header">
+<th>Light</th>
+<th>Dark</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>
+![](./screenshot.png)
+</td>
+<td>
+![](./screenshot_dark.png)
+</td>
+</tr>
+</tbody>
+</table>
+
 
 [^1]: VSCode is great, but a popup preview for math would be nice. Obsidian is great, but it's not open source.
 
