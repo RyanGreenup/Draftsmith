@@ -151,7 +151,7 @@ class MarkdownEditor(QWidget):
 
     overlay_toggled = pyqtSignal(bool)
 
-    def __init__(self, css_file=None, base_url=None, local_katex=True):
+    def __init__(self, css_file=None, base_url=None, local_katex=True, allow_remote_content=True):
         super().__init__()
         self.css_file = css_file
         self.dark_mode = False
@@ -160,6 +160,10 @@ class MarkdownEditor(QWidget):
         self.base_url = base_url or QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
         self.local_katex = local_katex
         self.setup_ui()
+
+        # NOTE Must allow external content for remote content with a base_url set
+        if allow_remote_content:
+            self.set_web_security_policies()
 
     def set_web_security_policies(self):
         """
@@ -277,7 +281,8 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.tab_widget)
 
         # Set local_katex option
-        self.local_katex = True  # You can make this a configurable option
+        # TODO make this a configurable option
+        self.local_katex = True
 
         # Create the first tab
         self.new_tab()
