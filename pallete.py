@@ -102,7 +102,8 @@ class Palette(QDialog):
                 self.filtered_items = fzy_sort(self.items, displays, text.lower())
         else:
             self.filtered_items = [
-                item for item in self.items
+                item
+                for item in self.items
                 if text.lower() in self.get_display_text(item).lower()
             ]
 
@@ -112,7 +113,6 @@ class Palette(QDialog):
     def filter_items(self, text):
         self._filter_items(text)
 
-
     def get_display_text(self, item):
         # To be overridden by subclasses if necessary
         return str(item)
@@ -120,7 +120,7 @@ class Palette(QDialog):
     def eventFilter(self, obj, event):
         if obj == self.search_bar and event.type() == QEvent.Type.KeyPress:
             key = event.key()
-            if key == Qt.Key.Key_Up:
+            if key in [Qt.Key.Key_Up, Qt.Key.Key_P | Qt.Key.Key_Control]:
                 self.move_selection(-1)
                 return True
             elif key == Qt.Key.Key_Down:
@@ -144,7 +144,6 @@ class Palette(QDialog):
                 self.list_widget.setCurrentItem(item)
                 self.list_widget.scrollToItem(item)
                 break
-
 
 
 class CommandPalette(Palette):
@@ -181,8 +180,6 @@ class CommandPalette(Palette):
         if action:
             action.trigger()  # Execute the action
         self.close()
-
-
 
 
 # TODO allow a pallete for navigating directories
@@ -262,7 +259,7 @@ def fzy_sort(values: list[str], displays: list[str], text: str) -> list[str] | N
     if not values:
         return None
 
-    sort_func = lambda x: fzy_dist(x[0], text)
+    def sort_func(x): return fzy_dist(x[0], text)
 
     sorted_values = sorted(zip(values, displays), key=sort_func, reverse=True)
     sorted_values = [value for value, _ in sorted_values]
