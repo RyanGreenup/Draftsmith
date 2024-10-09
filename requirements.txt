@@ -1,0 +1,14 @@
+Markdown==3.7
+Pygments==2.18.0
+pymdown-extensions==10.11.2
+PyQt5==5.15.11
+PyQt5-Qt5==5.15.15
+PyQt5_sip==12.15.0
+PyQt6==6.7.1
+PyQt6-Qt6==6.7.3
+PyQt6-WebEngine==6.7.0
+PyQt6-WebEngine-Qt6==6.7.3
+PyQt6-WebEngineSubwheel-Qt6==6.7.3
+PyQt6_sip==13.8.0
+PyQtWebEngine-Qt5==5.15.15
+PyYAML==6.0.2
