@@ -43,7 +43,8 @@ class Palette(QDialog):
 
         # Preview
         self.preview = QWebEngineView()
-        self.preview.setHtml("")
+        self.preview.hide()
+        self.preview.setHtml("<b>Preview</b>")
 
         self.main_layout.addWidget(self.list_widget)
 
@@ -226,7 +227,6 @@ class OpenFilePalette(Palette):
         self.splitter.addWidget(self.list_widget)
         self.splitter.addWidget(self.preview)
         self.splitter.setSizes([300, 300])
-        self.preview.show()
 
         self.main_layout.addWidget(self.splitter)
         self.list_widget.currentItemChanged.connect(self.preview_item)
@@ -267,6 +267,8 @@ class OpenFilePalette(Palette):
             self.markdown_content.build_html(local_katex=self.main_window.local_katex),
             base_path,
         )
+
+        self.preview.show()
 
     def populate_items(self):
         self.items.clear()
