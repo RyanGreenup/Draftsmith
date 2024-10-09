@@ -27,3 +27,7 @@
     - Local KaTeX
         - markdown_utils.py
     - Pull Local KaTeX Automatically (if not present), Requires npm
+- Markdown Extensions
+    - Footnotes
+    - Wikilinks
+    -
