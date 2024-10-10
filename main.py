@@ -170,7 +170,10 @@ class MarkdownEditor(QWidget):
         )
         self.local_katex = local_katex
         self.open_file_callback = open_file_callback  # Store the callback
-        self.current_file = None  # Add this line
+
+        # Add this line to initialize current_file
+        self.current_file = None
+
         self.setup_ui()
 
         # NOTE Must allow external content for remote content with a base_url set
@@ -375,6 +378,15 @@ class MainWindow(QMainWindow):
                 self, "Open File", "", "Markdown Files (*.md);;All Files (*)"
             )
 
+        if focus_tab:
+            # Check if the file is already open in any tab
+            for index in range(self.tab_widget.count()):
+                editor = self.tab_widget.widget(index)
+                if editor.current_file == file_path:
+                    # File is already open; focus the tab
+                    self.tab_widget.setCurrentIndex(index)
+                    return
+
         if file_path:
             try:
                 with open(file_path, "r", encoding="utf-8") as file:
@@ -389,11 +401,14 @@ class MainWindow(QMainWindow):
                     current_editor = self.tab_widget.currentWidget()
 
                 current_editor.editor.setPlainText(content)
+                current_editor.current_file = file_path  # Set the current_file here
+
+                # Update the tab text and window title
                 self.tab_widget.setTabText(
                     self.tab_widget.currentIndex(), os.path.basename(file_path)
                 )
-                self.current_file = file_path
                 self.setWindowTitle(f"Markdown Editor - {os.path.basename(file_path)}")
+
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Failed to open file: {str(e)}")
 
