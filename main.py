@@ -1,7 +1,7 @@
 from enum import Enum
 import markdown
 import os
-from pallete import CommandPalette, OpenLinkPalette, OpenFilePalette
+from palette import CommandPalette, InsertLinkPalette, OpenFilePalette
 from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
@@ -271,7 +271,7 @@ class Icon(Enum):
     PREVIOUS_TAB = "icons/arrow-180.png"
     NEXT_TAB = "icons/arrow.png"
     DARK_MODE = "icons/light-bulb.png"
-    PALLETE = "icons/keyboard.png"
+    PALETTE = "icons/keyboard.png"
 
 
 class MainWindow(QMainWindow):
@@ -614,14 +614,14 @@ class MainWindow(QMainWindow):
                     "Ctrl+E",
                 ),
                 "Open Command Pallete": self.build_action(
-                    Icon.PALLETE.value,
+                    Icon.PALETTE.value,
                     "Command Palette",
                     "Open the command palette",
                     self.open_command_palette,
                     "Ctrl+Shift+P",
                 ),
                 "Files Pallete": self.build_action(
-                    Icon.PALLETE.value,
+                    Icon.PALETTE.value,
                     "Files Palette",
                     "Open the Files palette",
                     self.open_files_palette,
@@ -683,7 +683,7 @@ class MainWindow(QMainWindow):
         # Palettes
         # Create command palette
         self.command_palette = CommandPalette(self.actions)
-        self.link_palette = OpenLinkPalette(self)
+        self.link_palette = InsertLinkPalette(self)
         self.files_palette = OpenFilePalette(self)
 
     def collect_actions_from_menu(self, menu_dict):

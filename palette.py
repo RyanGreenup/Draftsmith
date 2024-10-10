@@ -208,7 +208,7 @@ class CommandPalette(Palette):
         self.close()
 
 
-# TODO allow a pallete for navigating directories
+# TODO allow a palette for navigating directories
 # NOTE open directory should display a tree
 class OpenDirectoryPalette(Palette):
     def __init__(self, main_window):
@@ -290,7 +290,7 @@ class OpenFilePalette(Palette):
         self.close()
 
 
-class OpenLinkPalette(OpenFilePalette):
+class InsertLinkPalette(OpenFilePalette):
     def __init__(self, main_window):
         super().__init__(main_window)
         self.setWindowTitle("Insert Link")
@@ -330,3 +330,6 @@ def fzy_sort(values: list[str], displays: list[str], text: str) -> list[str] | N
     sorted_values = sorted(zip(values, displays), key=sort_func, reverse=True)
     sorted_values = [value for value, _ in sorted_values]
     return sorted_values
+
+
+
