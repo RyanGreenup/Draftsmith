@@ -82,6 +82,15 @@
     - Progress bar for the user would be nice
         - Atleast a toast notification
 
+## Next
+
+- Toaster Notifications
+- Progress Bar for FTS
+- Semantic Search
+- Follow Links in Preview
+- Better Vim
+- Display inline mathematics
+
 ## DONE
 - Ctrl-K should insert a wikilink if so configured
     - Only if directories can be supported
