@@ -2,6 +2,9 @@ from PyQt6.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
 from tree_sitter import Language, Parser
 import os
 
+# Specify the path to the compiled shared library
+MARKDOWN_LANGUAGE = Language("libtree-sitter-markdown.so", "markdown")
+
 
 class MarkdownTSHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for Markdown code using py-tree-sitter."""
@@ -92,15 +95,14 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
         # Recursively highlight child nodes
         for child in node.children:
             self.highlight_node(child, text)
-# Specify the path to the compiled shared library
-MARKDOWN_LANGUAGE = Language('libtree-sitter-markdown.so', 'markdown')
-def build_byte_to_char_map(self, text):
+
+    def build_byte_to_char_map(self, text):
         byte_to_char = {}
         byte_index = 0
         char_index = 0
         while char_index < len(text):
             char = text[char_index]
-            char_bytes = char.encode('utf-8')
+            char_bytes = char.encode("utf-8")
             for _ in char_bytes:
                 byte_to_char[byte_index] = char_index
                 byte_index += 1
