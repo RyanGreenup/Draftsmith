@@ -1,58 +1,87 @@
 import yaml
-import os
-from xdg import BaseDirectory
 import shutil
-from pprint import pprint
+from pathlib import Path
+from xdg import BaseDirectory
 
 
 class Config:
+    """
+    A class to handle the configuration settings for the Draftsmith application.
+    It reads from or initializes a YAML configuration file and sets up necessary directories.
+    """
+
+    DEFAULT_STYLE = "github-pandoc.css"
+
     def __init__(self):
         self.app_name = "draftsmith"
-        # Get XDG dirs
-        self.xdg_config_home = BaseDirectory.xdg_config_home
-        self.xdg_data_home = BaseDirectory.xdg_data_home
-        self.config_dir = os.path.join(self.xdg_config_home, self.app_name)
-        self.config_file = os.path.join(self.config_dir, "config.yaml")
-        self.data_home = os.path.join(self.xdg_data_home, self.app_name)
 
-        # CSS
-        self.default_style = "github-pandoc.css"
-        self.default_style_path = os.path.join(
-            os.path.dirname(__file__), self.default_style
-        )
+        # Get XDG directories
+        self.xdg_config_home = Path(BaseDirectory.xdg_config_home)
+        self.xdg_data_home = Path(BaseDirectory.xdg_data_home)
 
+        self.config_dir = self.xdg_config_home / self.app_name
+        self.config_file = self.config_dir / "config.yaml"
+        self.data_home = self.xdg_data_home / self.app_name
+
+        # Default CSS path
+        self.default_style_path = Path(__file__).parent / self.DEFAULT_STYLE
+
+        # Load or initialize configuration
         self.config = self.get_config()
 
-    def default_config(self):
+    @staticmethod
+    def default_config(css_path):
+        """
+        Returns the default configuration dictionary.
+        """
         return {
             "editor": "vim",
             "local_katex": True,
             "allow_remote_content": False,
             "link_revisits_tab": False,
-            "css_path": os.path.abspath(self.default_style_path),
+            "css_path": str(css_path.resolve()),
         }
 
     def write_default_config(self):
-        if not os.path.exists(self.config_dir):
-            os.makedirs(self.config_dir)
-        with open(self.config_file, "w") as f:
-            yaml.dump(self.default_config(), f)
+        """
+        Writes the default configuration to the YAML file and copies the default CSS style.
+        """
+        # Ensure the configuration directory exists
+        self.config_dir.mkdir(parents=True, exist_ok=True)
 
+        # Write default configuration to the config file
+        with self.config_file.open("w") as f:
+            yaml.dump(self.default_config(self.default_style_path), f)
+
+        # Ensure the data home directory exists
+        self.data_home.mkdir(parents=True, exist_ok=True)
+
+        # Copy the default CSS file to the data home directory
         shutil.copy(self.default_style_path, self.data_home)
 
     def load_config(self):
-        with open(self.config_file) as f:
-            return yaml.safe_load(f)
+        """
+        Loads the configuration from the YAML file.
+        """
+        try:
+            with self.config_file.open() as f:
+                return yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing the configuration file: {e}")
 
     def get_config(self):
-        if not os.path.exists(self.config_file):
+        """
+        Retrieves the current configuration, writing a default one if necessary.
+        """
+        if not self.config_file.exists():
             self.write_default_config()
         return self.load_config()
 
     def __repr__(self):
-        conf = self.config.copy()
-        # Dump to yaml
-        return yaml.dump(conf)
+        """
+        Returns a YAML-formatted string representation of the configuration.
+        """
+        return yaml.dump(self.config, default_flow_style=False)
 
 
 if __name__ == "__main__":
