@@ -1,4 +1,5 @@
 import os
+from fts import FTS
 from markdown_utils import set_web_security_policies
 from pathlib import Path
 from PyQt6.QtWebEngineCore import QWebEngineSettings
@@ -311,6 +312,22 @@ class InsertLinkPalette(OpenFilePalette):
             else:
                 self.main_window.insert_text(f"[{file_path}]({file_path})")
         self.close()
+
+class SearchFilePalette(OpenFilePalette):
+    def __init__(self, main_window):
+        super().__init__(main_window)
+        self.setWindowTitle("Insert Link")
+
+    def filter_items(self, text):
+        fts = FTS()
+        current_dir = os.getcwd()
+        with FTS([".md"], current_dir) as fts:
+            self.filtered_items = fts.search(text)
+        print(self.filtered_items)
+
+        self._update_list_widget()
+        self.highlight_first_item()
+
 
 
 def fzy_dist(s1: str, s2: str) -> float:

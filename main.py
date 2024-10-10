@@ -1,7 +1,8 @@
 from enum import Enum
+from fts import FTS
 import markdown
 import os
-from palette import CommandPalette, InsertLinkPalette, OpenFilePalette
+from palette import CommandPalette, InsertLinkPalette, OpenFilePalette, SearchFilePalette
 from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
@@ -258,6 +259,8 @@ class MarkdownEditor(QWidget):
 
 class Icon(Enum):
     LINK = "icons/link.png"
+    SEARCH = "icons/search.png"
+    SEARCH_REMOVE = "icons/search-minus.png"
     PREVIEW = "icons/magnifier.png"
     OVERLAY = "icons/switch.png"
     NEW_TAB = "icons/plus-octagon.png"
@@ -470,9 +473,12 @@ class MainWindow(QMainWindow):
             file.write(current_editor.editor.toPlainText())
 
         self.tab_widget.setTabText(
-            self.tab_widget.currentIndex(), os.path.basename(current_editor.current_file)
+            self.tab_widget.currentIndex(),
+            os.path.basename(current_editor.current_file),
         )
-        self.setWindowTitle(f"Markdown Editor - {os.path.basename(current_editor.current_file)}")
+        self.setWindowTitle(
+            f"Markdown Editor - {os.path.basename(current_editor.current_file)}"
+        )
 
     def revert_to_disk(self):
         current_editor = self.tab_widget.currentWidget()
@@ -506,6 +512,16 @@ class MainWindow(QMainWindow):
             self.save_file()
         else:
             print("No file to autosave")
+
+    def reset_search_index(self):
+        current_dir = os.getcwd()
+        with FTS([".md"], current_dir) as fts:
+            fts.remove_database()
+
+    def index_current_dir(self):
+        current_dir = os.getcwd()
+        with FTS([".md"], current_dir) as fts:
+            fts.index_current_dir()
 
     def create_toolbar(self):
         # Create a Toolbar
@@ -589,6 +605,29 @@ class MainWindow(QMainWindow):
                     self.toggle_autorevert,
                     "Ctrl+Shift+R",
                 ),
+            },
+            "Search": {
+                "Index Current Directory": self.build_action(
+                    Icon.SEARCH.value,
+                    "Index Current Directory",
+                    "Index all files in the current directory",
+                    self.index_current_dir,
+                    "Ctrl+I",
+                ),
+                "Reset Search Index": self.build_action(
+                    Icon.SEARCH_REMOVE.value,
+                    "Reset Search Index",
+                    "Reset the search index",
+                    self.reset_search_index,
+                    "Ctrl+Shift+I",
+                ),
+                "Search": self.build_action(
+                    Icon.SEARCH.value,
+                    "Search",
+                    "Search the indexed files",
+                    self.open_search_palette,
+                    "Ctrl+F",
+                    )
             },
             "View": {
                 "darkmode": self.build_action(
@@ -685,6 +724,7 @@ class MainWindow(QMainWindow):
         self.command_palette = CommandPalette(self.actions)
         self.link_palette = InsertLinkPalette(self)
         self.files_palette = OpenFilePalette(self)
+        self.search_palette = SearchFilePalette(self)
 
     def collect_actions_from_menu(self, menu_dict):
         actions = []
@@ -775,6 +815,10 @@ class MainWindow(QMainWindow):
     def open_command_palette(self):
         self.command_palette.open()
 
+
+    def open_search_palette(self):
+        self.search_palette.open()
+
     def open_link_palette(self):
         self.link_palette.open()
 
@@ -811,6 +855,7 @@ class PreviewPage(QWebEnginePage):
                 return False  # Prevent the webview from navigating to the link
         return super().acceptNavigationRequest(url, type, isMainFrame)
 
+
 if __name__ == "__main__":
     # Initialize configuration
     config = Config()
@@ -820,25 +865,25 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dir",
         type=str,
-        default=config.config.get('directory', None),
+        default=config.config.get("directory", None),
         help="Directory to Set as the Current Directory",
     )
     parser.add_argument(
         "--css",
         type=str,
-        default=config.config.get('css_path', None),
+        default=config.config.get("css_path", None),
         help="Path to a CSS file for the markdown preview",
     )
     parser.add_argument(
         "--remote-katex",
         action="store_true",
-        default=config.config.get('remote_katex', True),
+        default=config.config.get("remote_katex", True),
         help="Use Remote KaTeX CDN instead of local KaTeX",
     )
     parser.add_argument(
         "--disable-remote-content",
         action="store_true",
-        default=config.config.get('disable_remote_content', False),
+        default=config.config.get("disable_remote_content", False),
         help="Disable Remote Content in the Preview",
     )
     parser.add_argument(
@@ -853,7 +898,7 @@ if __name__ == "__main__":
     if args.css:
         args.css = Path(args.css).resolve()
     else:
-        args.css = Path(config.config.get('css_path')).resolve()
+        args.css = Path(config.config.get("css_path")).resolve()
 
     app = QApplication(sys.argv)
     window = MainWindow()
@@ -874,3 +919,11 @@ if __name__ == "__main__":
 # Footnotes
 # [^1]: https://facelessuser.github.io/pymdown-extensions/extensions/blocks/plugins/details/
 # [^2]: https://github.com/mkdocs/mkdocs/issues/282
+
+
+# Footnotes
+# [^1]: https://facelessuser.github.io/pymdown-extensions/extensions/blocks/plugins/details/
+
+
+# Footnotes
+# [^1]: https://facelessuser.github.io/pymdown-extensions/extensions/blocks/plugins/details/

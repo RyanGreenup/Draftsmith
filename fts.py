@@ -1,4 +1,6 @@
 import sqlite3
+import sys
+from tqdm import tqdm
 import os
 import hashlib
 from config import Config
@@ -69,6 +71,7 @@ class FTS:
             List[str]: A list of file paths.
         """
         all_files = []
+        print(f"Indexing {self.current_dir}...")
         for root, dirs, files in os.walk(self.current_dir):
             for filename in files:
                 if filename.endswith(tuple(self.allowed_extensions)):
@@ -76,23 +79,42 @@ class FTS:
                     all_files.append(file_path)
         return all_files
 
+    def remove_database(self) -> None:
+        """
+        Removes the FTS database file.
+        """
+        if self.db_path.exists():
+            os.remove(self.db_path)
+
     def index_current_dir(self) -> None:
         """
         Indexes all files in the current directory into the FTS database.
         """
+        # TODO: check hash before indexing
         all_files = self.walk_files()
-        for filepath in all_files:
-            try:
-                with open(filepath, "r", encoding="utf-8") as f:
-                    body = f.read()
-                    title = os.path.basename(filepath)
-                    self.db.execute(
-                        "INSERT INTO fts(title, body) VALUES (?, ?)", (title, body)
-                    )
-            except Exception as e:
-                # Log the error or handle it accordingly
-                print(f"Error indexing file {filepath}: {e}")
+        for i, filepath in tqdm(enumerate(all_files)):
+            ext = filepath
+            ext = os.path.splitext(ext)[-1]
+            if ext in self.allowed_extensions:
+                print(f"Indexing {filepath}")
+                try:
+                    with open(filepath, "r", encoding="utf-8") as f:
+                        body = f.read()
+                        title = os.path.basename(filepath)
+                        self.db.execute(
+                            "INSERT INTO fts(title, body) VALUES (?, ?)", (title, body)
+                        )
+                except Exception as e:
+                    # Log the error or handle it accordingly
+                    print(f"Error indexing file {filepath}: {e}", file=sys.stderr)
         self.db.commit()
+
+        # Test that the indexing was successful
+        with self.db:
+            cursor = self.db.execute("SELECT COUNT(*) FROM fts")
+            count = cursor.fetchone()[0]
+            print(f"Indexed {count} documents into {self.db_path}")
+
 
     def close(self) -> None:
         """
@@ -123,8 +145,13 @@ class FTS:
         Returns:
             List[tuple]: A list of tuples containing the title and body of matching documents.
         """
-        cursor = self.db.execute(
-            "SELECT title, body FROM fts WHERE fts MATCH ?", (query,)
-        )
+        if query.strip() == "":
+            # Return all documents if the query is empty
+            cursor = self.db.execute("SELECT title FROM fts")
+        else:
+            cursor = self.db.execute(
+                "SELECT title FROM fts WHERE fts MATCH ?", (query,)
+            )
         results = cursor.fetchall()
-        return results
+        # Get only the filenames
+        return [filepath for filepath, in results]
