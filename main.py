@@ -185,6 +185,8 @@ class MarkdownEditor(QWidget):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
         self.preview = QWebEngineView()
+        if config.config.get("no_side_by_side"):
+            self.preview.hide()
 
         # Set up the custom page with the callback and base directory
         self.preview_page = PreviewPage(

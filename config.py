@@ -40,6 +40,8 @@ class Config:
             "disable_remote_content": False,
             "link_revisits_tab": False,
             "css_path": str(css_path.resolve()),
+            # Defaults to a Side by Side Preview (Toggle with Ctrl-G)
+            "no_side_by_side": True,
         }
 
     def write_default_config(self):
