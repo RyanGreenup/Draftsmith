@@ -30,7 +30,7 @@ class WebEngineViewWithBaseUrl(QWebEngineView):
         set
         """
         # Update the base_dir to the current working directory
-        base_dir = os.path.dirname(os.getcwd() + os.path.sep)
+        base_dir = os.getcwd() + os.path.sep
         self.set_base_url(QUrl.fromLocalFile(base_dir))
 
         # Set the HTML content
