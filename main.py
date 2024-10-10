@@ -1,5 +1,6 @@
 from enum import Enum
 from fts import FTS
+from utils import popup_notification
 import markdown
 import os
 from palette import CommandPalette, InsertLinkPalette, OpenFilePalette, SearchFilePalette
@@ -811,10 +812,8 @@ class MainWindow(QMainWindow):
         """
         app = QApplication.instance()
         if is_dark:
-            app.setStyle("Fusion")
             app.setPalette(get_dark_palette())
         else:
-            app.setStyle("Fusion")
             app.setPalette(app.style().standardPalette())
 
         # Update the dark_mode attribute
@@ -929,6 +928,7 @@ if __name__ == "__main__":
 
     window.show()
     sys.exit(app.exec())
+
 
 
 # Footnotes
