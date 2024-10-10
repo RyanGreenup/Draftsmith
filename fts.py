@@ -148,13 +148,26 @@ class FTS:
         Returns:
             List[tuple]: A list of tuples containing the title and body of matching documents.
         """
+        def get_all_files() -> sqlite3.Cursor:
+            return self.db.execute("SELECT title FROM fts")
+
         if query.strip() == "":
             # Return all documents if the query is empty
-            cursor = self.db.execute("SELECT title FROM fts")
+            cursor = get_all_files()
         else:
-            cursor = self.db.execute(
-                "SELECT title FROM fts WHERE fts MATCH ?", (query,)
-            )
+            try:
+                cursor = self.db.execute(
+                    "SELECT title FROM fts WHERE fts MATCH ?", (query,)
+                )
+            except sqlite3.OperationalError as e:
+                # If the query is invalid, return all documents
+                cursor = get_all_files()
+                print(f"Invalid query: {e}", file=sys.stderr)
+            except Exception as e:
+                # Log the error or handle it accordingly
+                print(f"Error searching for '{query}': {e}", file=sys.stderr)
+                cursor = get_all_files()
+
         results = cursor.fetchall()
         # Get only the filenames
         return [filepath for filepath, in results]
