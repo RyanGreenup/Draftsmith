@@ -43,6 +43,7 @@ class Config:
             # Defaults to a Side by Side Preview (Toggle with Ctrl-G)
             "no_side_by_side": True,
             "insert_wikilinks": False,
+            "ollama_server": "http://localhost:11434",
         }
 
     def write_default_config(self):
