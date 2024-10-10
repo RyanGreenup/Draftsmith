@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QUrl, Qt, QEvent
 
-from markdown_utils import Markdown
+from markdown_utils import Markdown, WebEngineViewWithBaseUrl
 import sys
 
 from config import Config
@@ -44,7 +44,7 @@ class Palette(QDialog):
         self.list_widget = QListWidget()
 
         # Preview
-        self.preview = QWebEngineView()
+        self.preview = WebEngineViewWithBaseUrl()
         self.preview.hide()
         self.preview.setHtml("<b>Preview</b>")
 
@@ -270,9 +270,7 @@ class OpenFilePalette(Palette):
             os.path.dirname(os.path.abspath(item_data)) + os.sep
         )
         self.preview.setHtml(
-            self.markdown_content.build_html(local_katex=self.main_window.local_katex),
-            base_path,
-        )
+            self.markdown_content.build_html(local_katex=self.main_window.local_katex))
 
         self.preview.show()
 

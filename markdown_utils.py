@@ -1,3 +1,4 @@
+from PyQt6.QtCore import QUrl
 from PyQt6.QtWebEngineCore import QWebEngineSettings
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from pygments.formatters import HtmlFormatter
@@ -12,6 +13,31 @@ from markdown.extensions.wikilinks import WikiLinkExtension
 
 INLINE_MATH_PATTERN = re.compile(r"\$(.+?)\$")
 BLOCK_MATH_PATTERN = re.compile(r"\$\$([\s\S]+?)\$\$")
+
+
+class WebEngineViewWithBaseUrl(QWebEngineView):
+    """
+    A QWebEngineView subclass that automatically
+    sets the base URL for the HTML content based on the current
+    working directory.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def setHtml(self, html_text: str):
+        """
+        set
+        """
+        # Update the base_dir to the current working directory
+        base_dir = os.path.dirname(os.getcwd() + os.path.sep)
+        self.set_base_url(QUrl.fromLocalFile(base_dir))
+
+        # Set the HTML content
+        super().setHtml(html_text, baseUrl=self.base_url)
+
+    def set_base_url(self, base_url: QUrl):
+        self.base_url = base_url
 
 
 class Markdown:

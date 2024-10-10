@@ -7,7 +7,7 @@ from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
 from PyQt6.QtGui import QAction, QIcon, QKeyEvent, QTextCursor, QKeySequence
-from markdown_utils import Markdown, set_web_security_policies
+from markdown_utils import Markdown, set_web_security_policies, WebEngineViewWithBaseUrl
 from PyQt6.QtCore import QSize, QUrl, Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineSettings, QWebEnginePage
@@ -186,7 +186,7 @@ class MarkdownEditor(QWidget):
     def setup_ui(self):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
-        self.preview = QWebEngineView()
+        self.preview = WebEngineViewWithBaseUrl()
         if config.config.get("no_side_by_side"):
             self.preview.hide()
 
@@ -255,7 +255,7 @@ class MarkdownEditor(QWidget):
                 text=text, css_path=self.css_file, dark_mode=self.dark_mode
             )
             html = markdown_content.build_html(local_katex=self.local_katex)
-            self.preview.setHtml(html, self.base_url)
+            self.preview.setHtml(html)
 
 
 class Icon(Enum):

@@ -1,5 +1,7 @@
 from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout
-from PyQt6.QtCore import Qt
+from markdown_utils import WebEngineViewWithBaseUrl
+import os
+from PyQt6.QtCore import QUrl, Qt
 from PyQt6.QtGui import QKeyEvent, QTextCursor, QColor, QTextFormat
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 import re
@@ -16,7 +18,7 @@ class WebPopupInTextEdit:
         layout = QVBoxLayout(self.frame)
         layout.setContentsMargins(1, 1, 1, 1)
 
-        self.popup_view = QWebEngineView()
+        self.popup_view = WebEngineViewWithBaseUrl(self.frame)
         layout.addWidget(self.popup_view)
 
         self.frame.setLayout(layout)
@@ -47,6 +49,7 @@ class WebPopupInTextEdit:
             html = markdown_content.build_html()
         else:
             html = content
+
 
         self.popup_view.setHtml(html)
         self.frame.move(global_pos)
