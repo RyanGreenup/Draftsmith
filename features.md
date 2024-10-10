@@ -81,6 +81,11 @@
     - Use the same file open logic as insert link etc.
     - Progress bar for the user would be nice
         - Atleast a toast notification
+- Paths
+    - Should images be relative to the file or the notes directory
+        - Currently they are relative to the file
+- Titles
+    - The first heading should be the displayed title in everything, not the filename
 
 ## Next
 
@@ -94,9 +99,7 @@
 - Better Vim
 - Display inline mathematics
 
-- Paths
-    - Should images be relative to the file or the notes directory
-        - Currently they are relative to the file
+
 
 ## DONE
 - Ctrl-K should insert a wikilink if so configured
