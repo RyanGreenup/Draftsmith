@@ -84,8 +84,17 @@
 - Paths
     - Should images be relative to the file or the notes directory
         - Currently they are relative to the file
+    - Implement a config option for relative paths
+        - Change each call to `setHtml` to use the current file like so:
+
+            ```python
+            self.preview.setHtml(html, QUrl.fromLocalFile(self.current_file))
+            # If dir add trailing slash
+            self.preview.setHtml(html, QUrl.fromLocalFile(file_dir + os.path.sep))
+            ```
 - Titles
     - The first heading should be the displayed title in everything, not the filename
+
 
 ## Next
 
