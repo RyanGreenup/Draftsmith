@@ -1,7 +1,7 @@
 from enum import Enum
 from fts import FTS
 from utils import popup_notification
-from vimkeys import MarkdownHighlighter
+from editor_highlighting import MarkdownHighlighter
 import markdown
 import os
 from palette import (
@@ -849,6 +849,7 @@ if __name__ == "__main__":
     if args.dir:
         window.set_directory(args.dir)
 
+    app.setStyle("Fusion")
     window.show()
     sys.exit(app.exec())
 
