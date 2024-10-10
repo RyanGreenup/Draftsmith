@@ -324,6 +324,17 @@ class MainWindow(QMainWindow):
         # Connect tab change signal
         self.tab_widget.currentChanged.connect(self.update_current_tab_actions)
 
+    def show_toast(self, message: str, duration: int = 3000):
+        toast = ToastNotification(message, duration)
+        # Calculate the position to display the toast (e.g., bottom-right corner)
+        main_window_pos = self.mapToGlobal(self.rect().topLeft())
+        main_window_size = self.size()
+        toast_size = toast.size()
+
+        x = main_window_pos.x() + main_window_size.width() - toast_size.width() - 20
+        y = main_window_pos.y() + main_window_size.height() - toast_size.height() - 20
+
+        toast.show_at((x, y))
 
     def insert_text(self, text):
         current_editor = self.tab_widget.currentWidget()
