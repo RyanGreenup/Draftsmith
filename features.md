@@ -67,3 +67,11 @@
 - Datatables could be nice
     - Native Tables would be even nicer
 - Allow Default view for split as opposed to overlay
+- Visiting tab fails if base name matches
+
+- Links
+    - Currently links are resolved from the root of the notes directory
+         - I could change this to resolve them relative to the current file, but this is simpler in terms of:
+              - Inserting links from vim (e.g. resolve from cwd)
+              - Following links with the code base logic (e.g. resolve from cwd)
+              - Moving files makes it easier to update links
