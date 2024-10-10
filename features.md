@@ -57,3 +57,10 @@
 - Remember split after following links
 - Visit Tab instead
 - As it stands index.md doesn't work.
+- Config Option
+    - Open New tab when follow link vs follow link in current tab
+- Wikilinks
+- Databases
+    - Wikilinks to ID
+    - DuckDB with ODBC
+        - Optional support for postgres
