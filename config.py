@@ -36,8 +36,8 @@ class Config:
         """
         return {
             "editor": "vim",
-            "local_katex": True,
-            "allow_remote_content": False,
+            "remote_katex": True,
+            "disable_remote_content": False,
             "link_revisits_tab": False,
             "css_path": str(css_path.resolve()),
         }
@@ -75,7 +75,12 @@ class Config:
         """
         if not self.config_file.exists():
             self.write_default_config()
-        return self.load_config()
+        config = self.load_config()
+        default_config = self.default_config(self.default_style_path)
+        # Update config with any missing defaults
+        for key, value in default_config.items():
+            config.setdefault(key, value)
+        return config
 
     def __repr__(self):
         """

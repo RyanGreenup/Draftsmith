@@ -14,6 +14,7 @@ from vimkeys import VimTextEdit
 from pygments.formatters import HtmlFormatter
 import markdown
 from pathlib import Path
+from config import Config  # Import Config class
 import sys
 import argparse
 from PyQt6.QtWidgets import (
@@ -282,7 +283,7 @@ class MainWindow(QMainWindow):
         # Initialize dark_mode attribute
         self.dark_mode = False
 
-        # TODO use this css moving forward
+        # Use args here
         self.css_path = args.css
         self.store_css_content()
 
@@ -290,8 +291,7 @@ class MainWindow(QMainWindow):
         self.tab_widget = QTabWidget()
         self.setCentralWidget(self.tab_widget)
 
-        # Set local_katex option
-        # TODO make this a configurable option
+        # Set local_katex and allow_remote_content options
         self.local_katex = not args.remote_katex
         self.allow_remote_content = not args.disable_remote_content
 
@@ -810,22 +810,34 @@ class PreviewPage(QWebEnginePage):
         return super().acceptNavigationRequest(url, type, isMainFrame)
 
 if __name__ == "__main__":
+    # Initialize configuration
+    config = Config()
+
+    # Argument Parser
     parser = argparse.ArgumentParser(description="Markdown Editor with Preview")
     parser.add_argument(
-        "--dir", type=str, help="Directory to Set as the Current Directory"
+        "--dir",
+        type=str,
+        default=config.config.get('directory', None),
+        help="Directory to Set as the Current Directory",
     )
     parser.add_argument(
-        "--css", type=str, help="Path to a CSS file for the markdown preview"
+        "--css",
+        type=str,
+        default=config.config.get('css_path', None),
+        help="Path to a CSS file for the markdown preview",
     )
     parser.add_argument(
         "--remote-katex",
         action="store_true",
-        help="Use Remote KaTeX CDN instead of local NPM Module",
+        default=config.config.get('remote_katex', True),
+        help="Use Remote KaTeX CDN instead of local KaTeX",
     )
     parser.add_argument(
         "--disable-remote-content",
         action="store_true",
-        help="Disable Remote Content in the Preview (e.g. KaTeX CDN when a base_url is set)",
+        default=config.config.get('disable_remote_content', False),
+        help="Disable Remote Content in the Preview",
     )
     parser.add_argument(
         "input_files", nargs="*", help="Paths to the markdown files to open"
@@ -835,9 +847,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # Get realpath for css
+    # Ensure CSS path is resolved
     if args.css:
         args.css = Path(args.css).resolve()
+    else:
+        args.css = Path(config.config.get('css_path')).resolve()
 
     app = QApplication(sys.argv)
     window = MainWindow()
