@@ -170,6 +170,7 @@ class MarkdownEditor(QWidget):
         )
         self.local_katex = local_katex
         self.open_file_callback = open_file_callback  # Store the callback
+        self.current_file = None  # Add this line
         self.setup_ui()
 
         # NOTE Must allow external content for remote content with a base_url set
@@ -368,7 +369,7 @@ class MainWindow(QMainWindow):
         # Set the new tab as the current tab
         self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
 
-    def open_file(self, file_path=None):
+    def open_file(self, file_path=None, focus_tab=True):
         if not file_path:
             file_path, _ = QFileDialog.getOpenFileName(
                 self, "Open File", "", "Markdown Files (*.md);;All Files (*)"
@@ -429,36 +430,36 @@ class MainWindow(QMainWindow):
             self.autorevert_action.setChecked(self.autorevert_enabled)
 
     def autorevert(self):
-        if hasattr(self, "current_file"):
-            self.open_file(self.current_file)
+        current_editor = self.tab_widget.currentWidget()
+        if current_editor and current_editor.current_file:
+            self.open_file(current_editor.current_file, focus_tab=False)
         else:
-            print(
-                "No file to autorevert"
-            )  # You might want to handle this case differently
+            print("No file to autorevert")
 
     def save_file(self):
         current_editor = self.tab_widget.currentWidget()
         if not current_editor:
             return
 
-        if not hasattr(self, "current_file"):
+        if not current_editor.current_file:
             file_path, _ = QFileDialog.getSaveFileName(
                 self, "Save File", "", "Markdown Files (*.md);;All Files (*)"
             )
             if not file_path:
                 return  # User cancelled the save dialog
-            self.current_file = file_path
+            current_editor.current_file = file_path
 
-        with open(self.current_file, "w", encoding="utf-8") as file:
+        with open(current_editor.current_file, "w", encoding="utf-8") as file:
             file.write(current_editor.editor.toPlainText())
 
         self.tab_widget.setTabText(
-            self.tab_widget.currentIndex(), os.path.basename(self.current_file)
+            self.tab_widget.currentIndex(), os.path.basename(current_editor.current_file)
         )
-        self.setWindowTitle(f"Markdown Editor - {os.path.basename(self.current_file)}")
+        self.setWindowTitle(f"Markdown Editor - {os.path.basename(current_editor.current_file)}")
 
     def revert_to_disk(self):
-        if hasattr(self, "current_file"):
+        current_editor = self.tab_widget.currentWidget()
+        if current_editor and current_editor.current_file:
             reply = QMessageBox.question(
                 self,
                 "Revert to Disk",
@@ -467,7 +468,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.StandardButton.No,
             )
             if reply == QMessageBox.StandardButton.Yes:
-                self.open_file(self.current_file)
+                self.open_file(current_editor.current_file, focus_tab=False)
         else:
             QMessageBox.warning(self, "Revert to Disk", "No file is currently open.")
 
@@ -483,12 +484,11 @@ class MainWindow(QMainWindow):
             self.autosave_action.setChecked(self.autosave_enabled)
 
     def autosave(self):
-        if hasattr(self, "current_file"):
+        current_editor = self.tab_widget.currentWidget()
+        if current_editor and current_editor.current_file:
             self.save_file()
         else:
-            print(
-                "No file to autosave"
-            )  # You might want to handle this case differently
+            print("No file to autosave")
 
     def create_toolbar(self):
         # Create a Toolbar
