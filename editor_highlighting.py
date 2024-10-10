@@ -65,16 +65,54 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
             # Add other mappings as needed...
         }
 
-    def highlightBlock(self, text):
-        # Parse the text
-        tree = self.parser.parse(bytes(text, "utf-8"))
+        # Parse the initial document
+        self.parse_document()
 
-        # Create a mapping from byte offsets to character offsets
+        # Reparse and rehighlight when the document changes
+        self.document().contentsChanged.connect(self.rehighlight)
+
+    def parse_document(self):
+        """Parse the entire document and build the syntax tree."""
+        text = self.document().toPlainText()
+        self.tree = self.parser.parse(bytes(text, 'utf-8'))
         self.byte_to_char = self.build_byte_to_char_map(text)
 
-        # Start highlighting from the root node
-        root_node = tree.root_node
-        self.highlight_node(root_node, text)
+    def rehighlight(self):
+        """Reparse the document and rehighlight."""
+        self.parse_document()
+        super().rehighlight()
+
+    def highlightBlock(self, text):
+        block = self.currentBlock()
+        block_start = block.position()
+        block_end = block_start + block.length()
+
+        # Highlight nodes that intersect with this block
+        self.highlight_nodes_in_block(self.tree.root_node, block_start, block_end)
+
+    def highlight_nodes_in_block(self, node, block_start, block_end):
+        start_byte = node.start_byte
+        end_byte = node.end_byte
+        start_char = self.byte_to_char.get(start_byte)
+        end_char = self.byte_to_char.get(end_byte)
+
+        if start_char is None or end_char is None:
+            return
+
+        if end_char <= block_start or start_char >= block_end:
+            return  # Node is outside the current block
+
+        # Calculate the overlap between node and block
+        start = max(start_char, block_start) - block_start
+        end = min(end_char, block_end) - block_start
+        length = end - start
+
+        if node.type in self.formats and length > 0:
+            self.setFormat(start, length, self.formats[node.type])
+
+        # Recursively process child nodes
+        for child in node.children:
+            self.highlight_nodes_in_block(child, block_start, block_end)
 
     def highlight_node(self, node, text):
         # Check if the node type has a corresponding format
