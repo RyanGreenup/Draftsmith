@@ -52,7 +52,7 @@ class Markdown:
                 "admonition",
                 "toc",
                 # TODO Make base_url configurable to share between preview and editor
-                WikiLinkExtension(base_url=os.getcwd(), end_url=".md"),
+                WikiLinkExtension(base_url=os.getcwd() + os.path.sep, end_url=".md"),
             ],
             extension_configs={
                 "codehilite": {
