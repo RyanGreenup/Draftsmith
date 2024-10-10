@@ -44,6 +44,8 @@ class Config:
             "no_side_by_side": True,
             "insert_wikilinks": False,
             "openai_api_server": "http://localhost:11434",
+            "use_relative_paths": False,  # Not yet implemented
+            "notification_timeout": 500,
         }
 
     def write_default_config(self):
