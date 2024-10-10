@@ -66,6 +66,9 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
         # Parse the text
         tree = self.parser.parse(bytes(text, "utf-8"))
 
+        # Create a mapping from byte offsets to character offsets
+        self.byte_to_char = self.build_byte_to_char_map(text)
+
         # Start highlighting from the root node
         root_node = tree.root_node
         self.highlight_node(root_node, text)
@@ -76,15 +79,32 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
             start_byte = node.start_byte
             end_byte = node.end_byte
 
-            # Convert byte offsets to character offsets
-            start = len(bytes(text, 'utf-8')[:start_byte].decode('utf-8', 'ignore'))
-            length = len(bytes(text, 'utf-8')[start_byte:end_byte].decode('utf-8', 'ignore'))
+            # Get character offsets using the mapping
+            start = self.byte_to_char.get(start_byte)
+            end = self.byte_to_char.get(end_byte)
 
-            # Apply the format
-            self.setFormat(start, length, self.formats[node.type])
+            if start is not None and end is not None:
+                length = end - start
+                if length > 0:
+                    # Apply the format
+                    self.setFormat(start, length, self.formats[node.type])
 
         # Recursively highlight child nodes
         for child in node.children:
             self.highlight_node(child, text)
 # Specify the path to the compiled shared library
 MARKDOWN_LANGUAGE = Language('libtree-sitter-markdown.so', 'markdown')
+    def build_byte_to_char_map(self, text):
+        byte_to_char = {}
+        byte_index = 0
+        char_index = 0
+        while char_index < len(text):
+            char = text[char_index]
+            char_bytes = char.encode('utf-8')
+            for _ in char_bytes:
+                byte_to_char[byte_index] = char_index
+                byte_index += 1
+            char_index += 1
+        # Map the final byte index to the end of the text
+        byte_to_char[byte_index] = char_index
+        return byte_to_char
