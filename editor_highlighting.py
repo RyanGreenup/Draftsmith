@@ -1,81 +1,90 @@
-from PyQt6.QtCore import QRegularExpression
-from PyQt6.QtGui import (
-    QSyntaxHighlighter,
-    QTextCharFormat,
-    QFont,
-    QColor,
-)
+from PyQt6.QtGui import QSyntaxHighlighter, QTextCharFormat, QFont, QColor
+from tree_sitter import Language, Parser
+import os
 
 
-class MarkdownHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for Markdown code in QTextEdit."""
+class MarkdownTSHighlighter(QSyntaxHighlighter):
+    """Syntax highlighter for Markdown code using py-tree-sitter."""
 
     def __init__(self, document):
         super().__init__(document)
-        # Define the highlighting rules
-        self.highlightingRules = []
+
+        # Initialize the parser
+        self.parser = Parser()
+        self.parser.set_language(MARKDOWN_LANGUAGE)
+
+        # Define text formats for different markdown elements
+        self.formats = {}
 
         # Heading format
-        for i in range(1, 7):
-            headingFormat = QTextCharFormat()
-            headingFormat.setFontWeight(QFont.Weight.Bold)
-            headingFormat.setForeground(QColor("blue"))
-            headingFormat.setFontPointSize(24 - i * 2)
-            hashes = "#" * i
-            self.highlightingRules.append(
-                (QRegularExpression(f"^{hashes} .+"), headingFormat)
-            )
+        heading_format = QTextCharFormat()
+        heading_format.setFontWeight(QFont.Weight.Bold)
+        heading_format.setForeground(QColor("blue"))
 
-        # Bold format
-        boldFormat = QTextCharFormat()
-        boldFormat.setFontWeight(QFont.Weight.Bold)
-        self.highlightingRules.append(
-            (QRegularExpression("\\*\\*(.*?)\\*\\*"), boldFormat)
-        )
-        self.highlightingRules.append((QRegularExpression("__(.*?)__"), boldFormat))
+        # Emphasis format
+        emphasis_format = QTextCharFormat()
+        emphasis_format.setFontItalic(True)
+        emphasis_format.setForeground(QColor("darkRed"))
 
-        # Italic format
-        italicFormat = QTextCharFormat()
-        italicFormat.setFontItalic(True)
-        self.highlightingRules.append((QRegularExpression("\\*(.*?)\\*"), italicFormat))
-        self.highlightingRules.append((QRegularExpression("_(.*?)_"), italicFormat))
+        # Strong emphasis format
+        strong_format = QTextCharFormat()
+        strong_format.setFontWeight(QFont.Weight.Bold)
+        strong_format.setForeground(QColor("darkRed"))
 
         # Code format
-        codeFormat = QTextCharFormat()
-        codeFormat.setFontFamily("Courier")
-        codeFormat.setForeground(QColor("darkGreen"))
-        self.highlightingRules.append((QRegularExpression("`[^`]+`"), codeFormat))
-        self.highlightingRules.append((QRegularExpression("^\\s*```.*"), codeFormat))
+        code_format = QTextCharFormat()
+        code_format.setFontFamily("Courier")
+        code_format.setForeground(QColor("darkGreen"))
 
         # Link format
-        linkFormat = QTextCharFormat()
-        linkFormat.setForeground(QColor("darkBlue"))
-        self.highlightingRules.append(
-            (QRegularExpression("\\[.*?\\]\\(.*?\\)"), linkFormat)
-        )
+        link_format = QTextCharFormat()
+        link_format.setForeground(QColor("darkBlue"))
 
         # Image format
-        imageFormat = QTextCharFormat()
-        imageFormat.setForeground(QColor("darkMagenta"))
-        self.highlightingRules.append(
-            (QRegularExpression("!\\[.*?\\]\\(.*?\\)"), imageFormat)
-        )
+        image_format = QTextCharFormat()
+        image_format.setForeground(QColor("darkMagenta"))
 
         # List format
-        listFormat = QTextCharFormat()
-        listFormat.setForeground(QColor("brown"))
-        self.highlightingRules.append(
-            (QRegularExpression("^\\s*([-+*])\\s+.*"), listFormat)
-        )
-        self.highlightingRules.append(
-            (QRegularExpression("^\\s*\\d+\\.\\s+.*"), listFormat)
-        )
+        list_format = QTextCharFormat()
+        list_format.setForeground(QColor("brown"))
+
+        # Map node types to formats
+        self.formats = {
+            "atx_heading": heading_format,
+            "setext_heading": heading_format,
+            "emphasis": emphasis_format,
+            "strong_emphasis": strong_format,
+            "inline_code": code_format,
+            "fenced_code_block": code_format,
+            "link_destination": link_format,
+            "image": image_format,
+            "list_item": list_format,
+            # Add other mappings as needed...
+        }
 
     def highlightBlock(self, text):
-        for pattern, format in self.highlightingRules:
-            iterator = pattern.globalMatch(text)
-            while iterator.hasNext():
-                match = iterator.next()
-                index = match.capturedStart()
-                length = match.capturedLength()
-                self.setFormat(index, length, format)
+        # Parse the text
+        tree = self.parser.parse(bytes(text, "utf-8"))
+
+        # Start highlighting from the root node
+        root_node = tree.root_node
+        self.highlight_node(root_node, text)
+
+    def highlight_node(self, node, text):
+        # Check if the node type has a corresponding format
+        if node.type in self.formats:
+            start_byte = node.start_byte
+            end_byte = node.end_byte
+
+            # Convert byte offsets to character offsets
+            start = len(bytes(text, 'utf-8')[:start_byte].decode('utf-8', 'ignore'))
+            length = len(bytes(text, 'utf-8')[start_byte:end_byte].decode('utf-8', 'ignore'))
+
+            # Apply the format
+            self.setFormat(start, length, self.formats[node.type])
+
+        # Recursively highlight child nodes
+        for child in node.children:
+            self.highlight_node(child, text)
+# Specify the path to the compiled shared library
+MARKDOWN_LANGUAGE = Language('libtree-sitter-markdown.so', 'markdown')
