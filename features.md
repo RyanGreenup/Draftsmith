@@ -76,7 +76,9 @@
               - Following links with the code base logic (e.g. resolve from cwd)
               - Moving files makes it easier to update links
     - [ ] Slashes should be automatically replaced for the `os.path.sep`
-
+- FTS
+    - Should only index if the file hash changes
+    - Use the same file open logic as insert link etc.
 
 ## DONE
 - Ctrl-K should insert a wikilink if so configured
