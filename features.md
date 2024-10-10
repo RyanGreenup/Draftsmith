@@ -75,3 +75,10 @@
               - Inserting links from vim (e.g. resolve from cwd)
               - Following links with the code base logic (e.g. resolve from cwd)
               - Moving files makes it easier to update links
+    - [ ] Slashes should be automatically replaced for the `os.path.sep`
+
+
+## DONE
+- Ctrl-K should insert a wikilink if so configured
+    - Only if directories can be supported
+
