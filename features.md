@@ -94,19 +94,23 @@
             ```
 - Titles
     - The first heading should be the displayed title in everything, not the filename
+- Preview
+    - Links in Palettes
+        - Should they still open in the original window?
+            - Or just outright disable?
 
 
 ## Next
 
+- Treesitter
+- Semantic Search
+- Better Vim
+- Display inline mathematics and images
 - Toaster Notifications
     - [ ] Wikilinks
     - [ ] FTS
 - Progress Bar for FTS
     - [ ] Inherit from Toast
-- Semantic Search
-- Follow Links in Preview
-- Better Vim
-- Display inline mathematics
 
 
 
