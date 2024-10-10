@@ -30,6 +30,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QTabWidget,
+    QLabel,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression, QFile, QTextStream, QTimer
 from PyQt6.QtGui import (
@@ -41,7 +42,6 @@ from PyQt6.QtGui import (
     QKeyEvent,
     QShortcut,
 )
-from toast import ToastNotification
 
 
 def get_dark_palette():
@@ -494,6 +494,18 @@ class MainWindow(QMainWindow):
         )
         self.show_toast("File saved successfully")
 
+    def show_toast(self, message: str, duration: int = 3000):
+        toast = ToastNotification(message, duration)
+        # Calculate the position to display the toast (e.g., bottom-right corner)
+        main_window_pos = self.mapToGlobal(self.rect().topLeft())
+        main_window_size = self.size()
+        toast_size = toast.size()
+
+        x = main_window_pos.x() + main_window_size.width() - toast_size.width() - 20
+        y = main_window_pos.y() + main_window_size.height() - toast_size.height() - 20
+
+        toast.show_at((x, y))
+
     def revert_to_disk(self):
         current_editor = self.tab_widget.currentWidget()
         if current_editor and current_editor.current_file:
@@ -513,8 +525,10 @@ class MainWindow(QMainWindow):
         self.autosave_enabled = not self.autosave_enabled
         if self.autosave_enabled:
             self.autosave_timer.start(self.autosave_interval)
+            self.show_toast("Autosave enabled")
         else:
             self.autosave_timer.stop()
+            self.show_toast("Autosave disabled")
 
         # Update the AutoSave action state
         if self.autosave_action:
