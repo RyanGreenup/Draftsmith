@@ -245,8 +245,12 @@ class OpenFilePalette(Palette):
             print(e, file=sys.stderr)
             item_data = None
         if item_data:
-            with open(item_data, "r") as file:
-                self.set_preview(file.read(), item_data)
+            try:
+                with open(item_data, "r") as file:
+                    self.set_preview(file.read(), item_data)
+            except Exception as e:
+                print(e, file=sys.stderr)
+                self.preview.setHtml("<b>Error reading file</b>")
 
     def set_preview(self, content, item_data):
         if self.main_window.allow_remote_content:

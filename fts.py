@@ -63,7 +63,7 @@ class FTS:
             "CREATE VIRTUAL TABLE fts USING fts5(title, body, tokenize = 'porter')"
         )
 
-    def walk_files(self) -> List[str]:
+    def walk_files(self, relative: bool = True) -> List[str]:
         """
         Walks through the current directory and collects all files with allowed extensions.
 
@@ -76,6 +76,8 @@ class FTS:
             for filename in files:
                 if filename.endswith(tuple(self.allowed_extensions)):
                     file_path = os.path.join(root, filename)
+                    if relative:
+                        file_path = os.path.relpath(file_path, self.current_dir)
                     all_files.append(file_path)
         return all_files
 
@@ -91,7 +93,8 @@ class FTS:
         Indexes all files in the current directory into the FTS database.
         """
         # TODO: check hash before indexing
-        all_files = self.walk_files()
+        # TODO candidate for config file
+        all_files = self.walk_files(relative=True)
         for i, filepath in tqdm(enumerate(all_files)):
             ext = filepath
             ext = os.path.splitext(ext)[-1]
@@ -100,7 +103,7 @@ class FTS:
                 try:
                     with open(filepath, "r", encoding="utf-8") as f:
                         body = f.read()
-                        title = os.path.basename(filepath)
+                        title = filepath
                         self.db.execute(
                             "INSERT INTO fts(title, body) VALUES (?, ?)", (title, body)
                         )
