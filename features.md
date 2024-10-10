@@ -79,6 +79,8 @@
 - FTS
     - Should only index if the file hash changes
     - Use the same file open logic as insert link etc.
+    - Progress bar for the user would be nice
+        - Atleast a toast notification
 
 ## DONE
 - Ctrl-K should insert a wikilink if so configured
