@@ -50,7 +50,6 @@ class WebPopupInTextEdit:
         else:
             html = content
 
-
         self.popup_view.setHtml(html)
         self.frame.move(global_pos)
         self.frame.show()

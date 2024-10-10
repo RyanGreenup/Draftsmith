@@ -118,7 +118,6 @@ class FTS:
             count = cursor.fetchone()[0]
             print(f"Indexed {count} documents into {self.db_path}")
 
-
     def close(self) -> None:
         """
         Closes the database connection.
@@ -148,6 +147,7 @@ class FTS:
         Returns:
             List[tuple]: A list of tuples containing the title and body of matching documents.
         """
+
         def get_all_files() -> sqlite3.Cursor:
             return self.db.execute("SELECT title FROM fts")
 

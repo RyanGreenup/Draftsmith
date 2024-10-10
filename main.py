@@ -3,7 +3,12 @@ from fts import FTS
 from utils import popup_notification
 import markdown
 import os
-from palette import CommandPalette, InsertLinkPalette, OpenFilePalette, SearchFilePalette
+from palette import (
+    CommandPalette,
+    InsertLinkPalette,
+    OpenFilePalette,
+    SearchFilePalette,
+)
 from typing import Callable
 from PyQt6.QtWidgets import QTextEdit, QToolBar
 from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
@@ -643,7 +648,7 @@ class MainWindow(QMainWindow):
                     "Search the indexed files",
                     self.open_search_palette,
                     "Ctrl+F",
-                    )
+                ),
             },
             "View": {
                 "darkmode": self.build_action(
@@ -829,7 +834,6 @@ class MainWindow(QMainWindow):
     def open_command_palette(self):
         self.command_palette.open()
 
-
     def open_search_palette(self):
         self.search_palette.open()
 
@@ -928,7 +932,6 @@ if __name__ == "__main__":
 
     window.show()
     sys.exit(app.exec())
-
 
 
 # Footnotes

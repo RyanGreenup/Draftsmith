@@ -1,6 +1,7 @@
 import os
 from fts import FTS
 from markdown_utils import set_web_security_policies
+from utils import popup_notification
 from pathlib import Path
 from PyQt6.QtWebEngineCore import QWebEngineSettings
 from fuzzywuzzy import fuzz
@@ -20,6 +21,7 @@ from markdown_utils import Markdown, WebEngineViewWithBaseUrl
 import sys
 
 from config import Config
+
 config = Config()
 
 
@@ -265,12 +267,9 @@ class OpenFilePalette(Palette):
 
         # Set Base Path so Images are loaded correctly
         # NOTE, base_path ==> requires remote access on preview for remote katex
-        # TODO should this be set to use local katex?
-        base_path = QUrl.fromLocalFile(
-            os.path.dirname(os.path.abspath(item_data)) + os.sep
-        )
         self.preview.setHtml(
-            self.markdown_content.build_html(local_katex=self.main_window.local_katex))
+            self.markdown_content.build_html(local_katex=self.main_window.local_katex)
+        )
 
         self.preview.show()
 
@@ -334,7 +333,6 @@ class SearchFilePalette(OpenFilePalette):
         self.highlight_first_item()
 
 
-
 def fzy_dist(s1: str, s2: str) -> float:
     return fuzz.ratio(s1, s2)
 
@@ -352,6 +350,3 @@ def fzy_sort(values: list[str], displays: list[str], text: str) -> list[str] | N
     sorted_values = sorted(zip(values, displays), key=sort_func, reverse=True)
     sorted_values = [value for value, _ in sorted_values]
     return sorted_values
-
-
-
