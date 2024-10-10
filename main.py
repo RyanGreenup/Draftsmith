@@ -32,7 +32,6 @@ from PyQt6.QtWidgets import (
     QTabWidget,
     QLabel,
 )
-from toast import ToastNotification
 from PyQt6.QtCore import Qt, pyqtSignal, QRegularExpression, QFile, QTextStream, QTimer
 from PyQt6.QtGui import (
     QSyntaxHighlighter,
