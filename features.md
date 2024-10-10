@@ -85,11 +85,18 @@
 ## Next
 
 - Toaster Notifications
+    - [ ] Wikilinks
+    - [ ] FTS
 - Progress Bar for FTS
+    - [ ] Inherit from Toast
 - Semantic Search
 - Follow Links in Preview
 - Better Vim
 - Display inline mathematics
+
+- Paths
+    - Should images be relative to the file or the notes directory
+        - Currently they are relative to the file
 
 ## DONE
 - Ctrl-K should insert a wikilink if so configured
