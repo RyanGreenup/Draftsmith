@@ -3,7 +3,7 @@ from tree_sitter import Language, Parser
 import os
 
 # Specify the path to the compiled shared library
-MARKDOWN_LANGUAGE = Language("libtree-sitter-markdown.so", "markdown")
+MARKDOWN_LANGUAGE = Language('libtree-sitter-markdown.so')
 
 
 class MarkdownTSHighlighter(QSyntaxHighlighter):
@@ -22,29 +22,33 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
         (atx_heading) @heading
         (setext_heading) @heading
 
-        ; Emphasis
-        (emphasis) @emphasis
-        (strong_emphasis) @strong
-        (thematic_break) @thematic_break
+        ; Bold Text (Strong Emphasis)
+        (strong) @strong
 
-        ; Code
-        (inline_code) @code
+        ; Italic Text (Emphasis)
+        (emph) @emphasis
+
+        ; Code Blocks
         (fenced_code_block) @code_block
+        (indented_code_block) @code_block
 
-        ; Links and Images
-        (link_destination) @link
+        ; Inline Code
+        (code_span) @code
+
+        ; Links
+        (link) @link
+
+        ; Images
         (image) @image
 
         ; Lists
-        (list_marker_plus) @list_marker
-        (list_marker_minus) @list_marker
-        (list_marker_star) @list_marker
-        (list_marker_dot) @list_marker
+        (list_item) @list_item
 
-        ; Blockquote
+        ; Block Quotes
         (block_quote) @blockquote
 
-        ; Add other elements as needed...
+        ; Thematic Breaks
+        (thematic_break) @thematic_break
         """)
 
         # Define text formats for different markdown elements
@@ -87,17 +91,22 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
         blockquote_format.setForeground(QColor("darkGray"))
         blockquote_format.setFontItalic(True)
 
+        # Thematic break format
+        thematic_break_format = QTextCharFormat()
+        thematic_break_format.setForeground(QColor("gray"))
+
         # Map node types to formats
         self.formats = {
             "heading": heading_format,
-            "emphasis": emphasis_format,
             "strong": strong_format,
+            "emphasis": emphasis_format,
             "code": code_format,
             "code_block": code_format,
             "link": link_format,
             "image": image_format,
-            "list_marker": list_format,
+            "list_item": list_format,
             "blockquote": blockquote_format,
+            "thematic_break": thematic_break_format,
             # Add other mappings as needed...
         }
 
