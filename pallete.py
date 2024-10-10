@@ -18,7 +18,8 @@ from PyQt6.QtCore import QUrl, Qt, QEvent
 from markdown_utils import Markdown
 import sys
 
-# TODO Autoselect on Command Palette
+from config import Config
+config = Config()
 
 
 class Palette(QDialog):
@@ -297,7 +298,18 @@ class OpenLinkPalette(OpenFilePalette):
     def execute_item(self, item):
         file_path = item.data(Qt.ItemDataRole.UserRole)
         if file_path:
-            self.main_window.insert_text(f"[{file_path}]({file_path})")
+            use_wikilink = config.config.get('insert_wikilinks')
+            path_components = file_path.split(os.path.sep)
+            if len(path_components) > 1:
+                # TODO create a toast popup notifying user that
+                # wikilinks with / are not supported and using fallback
+                # md link for now
+                use_wikilink = False
+            if use_wikilink:
+                file_path = file_path.replace('.md', '')
+                self.main_window.insert_text(f"[[{file_path}]]")
+            else:
+                self.main_window.insert_text(f"[{file_path}]({file_path})")
         self.close()
 
 
