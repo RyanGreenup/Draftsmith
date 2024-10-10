@@ -94,7 +94,7 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
             self.highlight_node(child, text)
 # Specify the path to the compiled shared library
 MARKDOWN_LANGUAGE = Language('libtree-sitter-markdown.so', 'markdown')
-    def build_byte_to_char_map(self, text):
+def build_byte_to_char_map(self, text):
         byte_to_char = {}
         byte_index = 0
         char_index = 0
