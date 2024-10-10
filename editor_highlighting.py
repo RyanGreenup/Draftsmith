@@ -16,6 +16,37 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
         self.parser = Parser()
         self.parser.set_language(MARKDOWN_LANGUAGE)
 
+        # Compile tree-sitter queries for Markdown elements
+        self.query = MARKDOWN_LANGUAGE.query("""
+        ; Headings
+        (atx_heading) @heading
+        (setext_heading) @heading
+
+        ; Emphasis
+        (emphasis) @emphasis
+        (strong_emphasis) @strong
+        (thematic_break) @thematic_break
+
+        ; Code
+        (inline_code) @code
+        (fenced_code_block) @code_block
+
+        ; Links and Images
+        (link_destination) @link
+        (image) @image
+
+        ; Lists
+        (list_marker_plus) @list_marker
+        (list_marker_minus) @list_marker
+        (list_marker_star) @list_marker
+        (list_marker_dot) @list_marker
+
+        ; Blockquote
+        (block_quote) @blockquote
+
+        ; Add other elements as needed...
+        """)
+
         # Define text formats for different markdown elements
         self.formats = {}
 
@@ -51,17 +82,22 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
         list_format = QTextCharFormat()
         list_format.setForeground(QColor("brown"))
 
+        # Blockquote format
+        blockquote_format = QTextCharFormat()
+        blockquote_format.setForeground(QColor("darkGray"))
+        blockquote_format.setFontItalic(True)
+
         # Map node types to formats
         self.formats = {
-            "atx_heading": heading_format,
-            "setext_heading": heading_format,
+            "heading": heading_format,
             "emphasis": emphasis_format,
-            "strong_emphasis": strong_format,
-            "inline_code": code_format,
-            "fenced_code_block": code_format,
-            "link_destination": link_format,
+            "strong": strong_format,
+            "code": code_format,
+            "code_block": code_format,
+            "link": link_format,
             "image": image_format,
-            "list_item": list_format,
+            "list_marker": list_format,
+            "blockquote": blockquote_format,
             # Add other mappings as needed...
         }
 
@@ -85,34 +121,36 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
     def highlightBlock(self, text):
         block = self.currentBlock()
         block_start = block.position()
-        block_end = block_start + block.length()
+        block_length = block.length()
+        block_end = block_start + block_length
 
-        # Highlight nodes that intersect with this block
-        self.highlight_nodes_in_block(self.tree.root_node, block_start, block_end)
+        # Query the syntax tree for nodes overlapping with this block
+        captures = self.query.captures(self.tree.root_node)
 
-    def highlight_nodes_in_block(self, node, block_start, block_end):
-        start_byte = node.start_byte
-        end_byte = node.end_byte
-        start_char = self.byte_to_char.get(start_byte)
-        end_char = self.byte_to_char.get(end_byte)
+        for node, capture_name in captures:
+            start_byte = node.start_byte
+            end_byte = node.end_byte
 
-        if start_char is None or end_char is None:
-            return
+            start_char = self.byte_to_char.get(start_byte)
+            end_char = self.byte_to_char.get(end_byte)
 
-        if end_char <= block_start or start_char >= block_end:
-            return  # Node is outside the current block
+            if start_char is None or end_char is None:
+                continue
 
-        # Calculate the overlap between node and block
-        start = max(start_char, block_start) - block_start
-        end = min(end_char, block_end) - block_start
-        length = end - start
+            # Check if the node overlaps with the current block
+            if end_char <= block_start or start_char >= block_end:
+                continue  # Node is outside the current block
 
-        if node.type in self.formats and length > 0:
-            self.setFormat(start, length, self.formats[node.type])
+            # Calculate the overlap between node and block
+            relative_start = max(start_char, block_start) - block_start
+            relative_end = min(end_char, block_end) - block_start
+            length = relative_end - relative_start
 
-        # Recursively process child nodes
-        for child in node.children:
-            self.highlight_nodes_in_block(child, block_start, block_end)
+            if length > 0:
+                fmt = self.formats.get(capture_name)
+                if fmt:
+                    self.setFormat(relative_start, length, fmt)
+
 
     def highlight_node(self, node, text):
         # Check if the node type has a corresponding format
