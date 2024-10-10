@@ -8,7 +8,11 @@ config = Config()
 
 
 class FTS:
-    def __init__(self, allowed_extensions: Optional[List[str]] = None, current_dir: Optional[str] = None):
+    def __init__(
+        self,
+        allowed_extensions: Optional[List[str]] = None,
+        current_dir: Optional[str] = None,
+    ):
         """
         Initializes the full-text search class.
 
@@ -35,7 +39,9 @@ class FTS:
         hash_object = hashlib.sha256(self.current_dir.encode("utf-8"))
         hash_hex = hash_object.hexdigest()
         db_name = f"{hash_hex}.{extension}"
-        self.db_path = config.data_home / db_name  # Assuming config.data_home is a Path object
+        self.db_path = (
+            config.data_home / db_name
+        )  # Assuming config.data_home is a Path object
 
     def load_database(self) -> None:
         """
@@ -87,6 +93,7 @@ class FTS:
                 # Log the error or handle it accordingly
                 print(f"Error indexing file {filepath}: {e}")
         self.db.commit()
+
     def close(self) -> None:
         """
         Closes the database connection.
