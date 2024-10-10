@@ -64,3 +64,6 @@
     - Wikilinks to ID
     - DuckDB with ODBC
         - Optional support for postgres
+- Datatables could be nice
+    - Native Tables would be even nicer
+- Allow Default view for split as opposed to overlay
