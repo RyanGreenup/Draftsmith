@@ -1,7 +1,7 @@
 
 from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout, QWidget, QScrollBar
 from markdown_utils import WebEngineViewWithBaseUrl
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, QPoint
 import re
 from markdown_utils import Markdown
 from config import Config
