@@ -98,12 +98,13 @@
     - Links in Palettes
         - Should they still open in the original window?
             - Or just outright disable?
+- Sync Scroll
 
 
 ## Next
 
-- Treesitter
 - Semantic Search
+- RAG
 - Better Vim
 - Display inline mathematics and images
 - Toaster Notifications
