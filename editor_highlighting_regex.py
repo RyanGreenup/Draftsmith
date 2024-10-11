@@ -1,12 +1,12 @@
-import re
 from PyQt6.QtCore import QRegularExpression
+from config import Config
 from PyQt6.QtGui import (
     QSyntaxHighlighter,
     QTextCharFormat,
     QFont,
     QColor,
 )
-from regex_patterns import INLINE_MATH_PATTERN, BLOCK_MATH_PATTERN
+from regex_patterns import INLINE_MATH_PATTERN
 
 
 def utf16_index(text, unicode_index):
@@ -35,21 +35,13 @@ class MarkdownHighlighter(QSyntaxHighlighter):
                 (QRegularExpression(f"^{hashes} .+"), headingFormat)
             )
 
-        # Block Math (use native Regex because DotALL doesn't seem to be working)
-        blockMathFormat = QTextCharFormat()
-        blockMathFormat.setForeground(QColor("darkGreen"))
-        blockMathFormat.setBackground(QColor("lightGray"))
-        self.highlightingRules_unicode.append(
-            (BLOCK_MATH_PATTERN, blockMathFormat)
-        )
-
         # Inline Math
         inlineMathFormat = QTextCharFormat()
         inlineMathFormat.setForeground(QColor("darkGreen"))
         # Set Background to highlight math
         inlineMathFormat.setBackground(QColor("lightGray"))
-        self.highlightingRules_unicode.append(
-            (INLINE_MATH_PATTERN, inlineMathFormat)
+        self.highlightingRules.append(
+            (QRegularExpression(INLINE_MATH_PATTERN.pattern), inlineMathFormat)
         )
 
         # Bold format
@@ -68,7 +60,7 @@ class MarkdownHighlighter(QSyntaxHighlighter):
 
         # Code format
         codeFormat = QTextCharFormat()
-        codeFormat.setFontFamily("Courier")
+        codeFormat.setFontFamily(Config().config["fonts"]["editor"]["mono"])
         codeFormat.setForeground(QColor("darkGreen"))
         self.highlightingRules.append((QRegularExpression("`[^`]+`"), codeFormat))
         self.highlightingRules.append((QRegularExpression("^\\s*```.*"), codeFormat))
@@ -76,6 +68,7 @@ class MarkdownHighlighter(QSyntaxHighlighter):
         # Link format
         linkFormat = QTextCharFormat()
         linkFormat.setForeground(QColor("darkBlue"))
+        linkFormat.setFontWeight(QFont.Weight.Bold)
         self.highlightingRules.append(
             (QRegularExpression("\\[.*?\\]\\(.*?\\)"), linkFormat)
         )
@@ -106,15 +99,3 @@ class MarkdownHighlighter(QSyntaxHighlighter):
                     index = match.capturedStart()
                     length = match.capturedLength()
                     self.setFormat(index, length, format)
-
-            for pattern, format in self.highlightingRules_unicode:
-                matches = re.finditer(pattern, text)
-                for match in matches:
-                    index = match.start()
-                    length = match.end() - index
-
-                    # Convert to utf-16 indices
-                    index_utf16 = utf16_index(text, index)
-                    length_utf16 = utf16_index(text, match.end()) - index_utf16
-
-                    self.setFormat(index_utf16, length_utf16, format)
