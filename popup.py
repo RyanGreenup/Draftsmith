@@ -239,12 +239,36 @@ class MathAutoPopups(AutoPopups):
 
     def __init__(self, text_edit: QTextEdit, pin_to_scrollbar: bool = True):
         super().__init__(text_edit, pin_to_scrollbar)
-        # Connect to the textChanged signal
         self.text_edit.textChanged.connect(self.on_text_changed)
+        self.last_cursor_position = 0
 
     def on_text_changed(self):
         cursor = self.text_edit.textCursor()
-        self.update_popup_position_and_move_window(cursor)
+        current_position = cursor.position()
+        
+        # Check if we've just entered a math environment
+        if self.is_math_environment_start(current_position):
+            self.update_popup_position_and_move_window(cursor)
+        elif current_position < self.last_cursor_position:
+            # If we've moved backwards (e.g., deleted text), check again
+            self.update_popup_position_and_move_window(cursor)
+        else:
+            # If we're already showing a popup, update its content
+            if self.visible:
+                self.update_popup_position_and_move_window(cursor)
+        
+        self.last_cursor_position = current_position
+
+    def is_math_environment_start(self, position):
+        text = self.text_edit.toPlainText()
+        if position > 0:
+            if text[position-1:position+1] == '$$':
+                return True
+            if position > 1 and text[position-2:position] == '$$':
+                return True
+            if text[position-1] == '$' and (position == 1 or text[position-2] != '$'):
+                return True
+        return False
 
     def update_popup_position_and_move_window(self, cursor=None):
         if cursor is None:
