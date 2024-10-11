@@ -160,8 +160,30 @@ class WebPopupInTextEdit:
                 end_cursor = QTextCursor(self.text_edit.document())
                 end_cursor.setPosition(end_pos)
                 end_rect = self.text_edit.cursorRect(end_cursor)
-                global_pos = self.text_edit.mapToGlobal(end_rect.bottomRight())
-                self.frame.move(global_pos)
+                
+                # Calculate the position relative to the viewport
+                viewport_pos = self.text_edit.viewport().mapToGlobal(end_rect.bottomRight())
+                
+                # Adjust the position if it's outside the visible area
+                text_edit_rect = self.text_edit.rect()
+                text_edit_global_rect = self.text_edit.mapToGlobal(text_edit_rect.topLeft())
+                
+                max_y = text_edit_global_rect.y() + text_edit_rect.height() - self.frame.height()
+                new_y = min(viewport_pos.y(), max_y)
+                
+                # Ensure the popup stays within the text edit's boundaries
+                new_x = max(text_edit_global_rect.x(), min(viewport_pos.x(), text_edit_global_rect.x() + text_edit_rect.width() - self.frame.width()))
+                
+                # Set the new position
+                self.frame.move(new_x, new_y)
+                
+                # Make sure the popup is visible if it's within the text edit's boundaries
+                if text_edit_rect.contains(self.text_edit.mapFromGlobal(QPoint(new_x, new_y))):
+                    self.frame.show()
+                else:
+                    self.frame.hide()
+            else:
+                self.hide_popup()
 
     def on_text_edit_resize(self, event):
         self.update_popup_position()
