@@ -237,29 +237,30 @@ class MathAutoPopups(AutoPopups):
     A class creating math auto popups based on Regex
     """
 
-    # TODO more can be separated out here
-    # like, update_popup_position simply needs
-    # Needs the text and the other methods
-    # will deal with it.
-    #
-    # This requires renaming get_math_content to get_content
-    #
-    # Get Popup Position can probably be moved out too
-    # This just sets it to the end of the block
-    # If we can pull out the text, we can pull out the end index
-    # The use of $$ is a bit of a problem here
-    # TODO Remove the use of $$ and use whatever method pulled out the text
-
     def __init__(self, text_edit: QTextEdit, pin_to_scrollbar: bool = True):
         super().__init__(text_edit, pin_to_scrollbar)
+        # Connect to the textChanged signal
+        self.text_edit.textChanged.connect(self.on_text_changed)
+
+    def on_text_changed(self):
+        cursor = self.text_edit.textCursor()
+        self.update_popup_position_and_move_window(cursor)
+
+    def update_popup_position_and_move_window(self, cursor=None):
+        if cursor is None:
+            cursor = self.text_edit.textCursor()
+        content = self.get_content(cursor)
+        if content is not None:
+            self.show_popup(content, is_math=True)
+        else:
+            self.hide_popup()
 
     def get_content(self, cursor):
-        # Try fo Block Math first
+        # Try for Block Math first
         for ptn in [BLOCK_MATH_PATTERN, INLINE_MATH_PATTERN]:
-            if c := self.get_content_from_regex(cursor, INLINE_MATH_PATTERN):
+            if c := self.get_content_from_regex(cursor, ptn):
                 return c
-        else:
-            return None
+        return None
 
     def get_math_block_end(self, content):
         text = self.text_edit.toPlainText()
