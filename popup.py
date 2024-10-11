@@ -1,5 +1,5 @@
 
-from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout, QWidget, QScrollBar
 from markdown_utils import WebEngineViewWithBaseUrl
 from PyQt6.QtCore import Qt, QSize
 import re
@@ -48,6 +48,10 @@ class WebPopupInTextEdit:
         self.visible = False
         self.dark_mode = False
 
+        self.text_edit.verticalScrollBar().valueChanged.connect(self.update_popup_position)
+        self.text_edit.horizontalScrollBar().valueChanged.connect(self.update_popup_position)
+        self.text_edit.resizeEvent = self.on_text_edit_resize
+
     def get_math_block_end(self, content):
         text = self.text_edit.toPlainText()
         start_pos = text.find(content)
@@ -61,16 +65,6 @@ class WebPopupInTextEdit:
 
     def show_popup(self, cursor, content, is_math=True):
         if is_math:
-            end_pos = self.get_math_block_end(content)
-            end_cursor = QTextCursor(self.text_edit.document())
-            end_cursor.setPosition(end_pos)
-            end_rect = self.text_edit.cursorRect(end_cursor)
-            global_pos = self.text_edit.mapToGlobal(end_rect.bottomRight())
-        else:
-            cursor_rect = self.text_edit.cursorRect(cursor)
-            global_pos = self.text_edit.mapToGlobal(cursor_rect.bottomRight())
-
-        if is_math:
             is_block_math = content.strip().startswith("$$") and content.strip().endswith("$$")
             math_text = content.strip() if is_block_math else f"${content.strip()}$"
             markdown_content = Markdown(text=math_text, dark_mode=self.dark_mode)
@@ -79,9 +73,9 @@ class WebPopupInTextEdit:
             html = content
 
         self.popup_view.setHtml(html)
-        self.frame.move(global_pos)
-        self.frame.show()
         self.visible = True
+        self.update_popup_position()
+        self.frame.show()
 
     def hide_popup(self):
         if self.visible:
@@ -156,3 +150,20 @@ class WebPopupInTextEdit:
 
     def hide_math_popup(self):
         self.hide_popup()
+
+    def update_popup_position(self):
+        if self.visible:
+            cursor = self.text_edit.textCursor()
+            math_content = self.is_cursor_in_math_environment(cursor)
+            if math_content is not None:
+                end_pos = self.get_math_block_end(math_content)
+                end_cursor = QTextCursor(self.text_edit.document())
+                end_cursor.setPosition(end_pos)
+                end_rect = self.text_edit.cursorRect(end_cursor)
+                global_pos = self.text_edit.mapToGlobal(end_rect.bottomRight())
+                self.frame.move(global_pos)
+
+    def on_text_edit_resize(self, event):
+        self.update_popup_position()
+        # Call the original resizeEvent
+        QTextEdit.resizeEvent(self.text_edit, event)
