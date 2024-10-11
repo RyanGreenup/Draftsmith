@@ -3,6 +3,7 @@ from markdown_utils import WebEngineViewWithBaseUrl
 from PyQt6.QtCore import Qt
 import re
 from markdown_utils import Markdown
+from config import Config
 
 
 from PyQt6.QtCore import Qt, QRegularExpression
@@ -152,6 +153,12 @@ class VimTextEdit(QTextEdit):
         self.g_pressed = False
         self.dark_mode = False
 
+        # Load configuration
+        self.config = Config().config
+
+        # Set fonts based on configuration
+        self.set_fonts()
+
         # Initialize the WebPopupInTextEdit
         self.web_popup = WebPopupInTextEdit(self)
 
@@ -159,6 +166,22 @@ class VimTextEdit(QTextEdit):
         self.cursorPositionChanged.connect(self.update_line_highlight)
         self.cursorPositionChanged.connect(self.web_popup.on_cursor_position_changed)
         self.textChanged.connect(self.web_popup.on_cursor_position_changed)
+
+    def set_fonts(self):
+        font = QFont()
+        font_config = self.config['fonts']['editor']
+        
+        # Set monospace font for the editor
+        font.setFamily(font_config['mono'])
+        
+        # You can set a default size here, or use a size from the config if you add one
+        font.setPointSize(12)  # Default size, adjust as needed
+        
+        self.setFont(font)
+
+    def update_fonts(self):
+        self.set_fonts()
+        self.update()
 
     def update_line_highlight(self):
         if self.vim_mode and not self.insert_mode:
