@@ -52,6 +52,7 @@ class WebPopupInTextEdit:
         cursor_rect = self.text_edit.cursorRect(cursor)
         global_pos = self.text_edit.mapToGlobal(cursor_rect.bottomRight())
 
+
         if is_math:
             is_block_math = content.strip().startswith(
                 "$$"
