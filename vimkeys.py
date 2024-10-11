@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, QSize
 import re
 from markdown_utils import Markdown
 from config import Config
-from popup import WebPopupInTextEdit
+from popup import MathAutoPopups
 
 
 from PyQt6.QtCore import Qt, QRegularExpression
@@ -60,7 +60,7 @@ class VimTextEdit(BaseEditor):
         self.dark_mode = False
 
         # Initialize the WebPopupInTextEdit
-        self.web_popup = WebPopupInTextEdit(self)
+        self.web_popup = MathAutoPopups(self)
 
         # Connect signals after initializing web_popup
         self.cursorPositionChanged.connect(self.update_line_highlight)
