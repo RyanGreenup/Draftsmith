@@ -109,7 +109,7 @@ class AutoPopups(WebViewPopups):
     """
     def __init__(self, text_edit: QTextEdit, pin_to_scrollbar: bool = True):
         super().__init__(text_edit)
-        
+
         if pin_to_scrollbar:
             on_scroll = self.update_popup_position_and_move_window
         else:
@@ -122,8 +122,8 @@ class AutoPopups(WebViewPopups):
         self.on_cursor_position_changed()
 
     def on_cursor_position_changed(self):
-        # Implement cursor position change logic here
-        pass
+        raise NotImplementedError, "Subclass must implement this method"
+
 
     def on_text_edit_resize(self, event):
         self.update_popup_position()
