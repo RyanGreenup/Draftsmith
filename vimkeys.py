@@ -16,6 +16,8 @@ from PyQt6.QtGui import (
     QTextFormat,
 )
 
+from regex_patterns import INLINE_MATH_PATTERN, BLOCK_MATH_PATTERN
+
 
 class WebPopupInTextEdit:
     def __init__(self, text_edit: QTextEdit):
@@ -118,18 +120,14 @@ class WebPopupInTextEdit:
         text = self.text_edit.toPlainText()
         pos = cursor.position()
 
-        # Patterns to match math environments
-        double_dollar_pattern = re.compile(r"\$\$(.*?)\$\$", re.DOTALL)
-        single_dollar_pattern = re.compile(r"(?<!\$)\$((?!\$).+?)(?<!\$)\$", re.DOTALL)
-
         # Check if cursor is inside any double-dollar math environment
-        for match in double_dollar_pattern.finditer(text):
+        for match in BLOCK_MATH_PATTERN.finditer(text):
             start, end = match.span()
             if start <= pos <= end:
                 return match.group(0)  # Return the entire match including $$
 
         # Check if cursor is inside any single-dollar math environment
-        for match in single_dollar_pattern.finditer(text):
+        for match in INLINE_MATH_PATTERN.finditer(text):
             start, end = match.span()
             if start <= pos <= end:
                 return match.group(1)  # Return only the content inside $...$

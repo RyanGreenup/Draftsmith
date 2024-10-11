@@ -11,8 +11,7 @@ from pathlib import Path
 import re
 from markdown.extensions.wikilinks import WikiLinkExtension
 
-INLINE_MATH_PATTERN = re.compile(r"\$(.+?)\$")
-BLOCK_MATH_PATTERN = re.compile(r"\$\$([\s\S]+?)\$\$")
+from regex_patterns import INLINE_MATH_PATTERN, BLOCK_MATH_PATTERN
 
 
 class WebEngineViewWithBaseUrl(QWebEngineView):

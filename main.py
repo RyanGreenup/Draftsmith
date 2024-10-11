@@ -1,7 +1,7 @@
 from enum import Enum
 from fts import FTS
 from utils import popup_notification
-from editor_highlighting import MarkdownTSHighlighter
+from editor_highlighting_regex import MarkdownHighlighter
 import markdown
 import os
 from palette import (
@@ -147,7 +147,7 @@ class MarkdownEditor(QWidget):
         self.build_layout()
 
         # Apply syntax highlighting to the editor
-        self.highlighter = MarkdownTSHighlighter(self.editor.document())
+        self.highlighter = MarkdownHighlighter(self.editor.document())
 
         # Connect the Editor with the Preview
         self.editor.textChanged.connect(self.update_preview)
