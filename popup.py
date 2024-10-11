@@ -48,15 +48,30 @@ class WebPopupInTextEdit:
         self.visible = False
         self.dark_mode = False
 
-    def show_popup(self, cursor, content, is_math=True):
-        cursor_rect = self.text_edit.cursorRect(cursor)
-        global_pos = self.text_edit.mapToGlobal(cursor_rect.bottomRight())
+    def get_math_block_end(self, content):
+        text = self.text_edit.toPlainText()
+        start_pos = text.find(content)
+        end_pos = start_pos + len(content)
+        
+        # Find the position of the closing $$
+        closing_pos = text.find("$$", end_pos - 2)
+        if closing_pos != -1:
+            return closing_pos + 2  # Return the position after the closing $$
+        return end_pos  # Fallback to the end of the content if no closing $$ found
 
+    def show_popup(self, cursor, content, is_math=True):
+        if is_math:
+            end_pos = self.get_math_block_end(content)
+            end_cursor = QTextCursor(self.text_edit.document())
+            end_cursor.setPosition(end_pos)
+            end_rect = self.text_edit.cursorRect(end_cursor)
+            global_pos = self.text_edit.mapToGlobal(end_rect.bottomRight())
+        else:
+            cursor_rect = self.text_edit.cursorRect(cursor)
+            global_pos = self.text_edit.mapToGlobal(cursor_rect.bottomRight())
 
         if is_math:
-            is_block_math = content.strip().startswith(
-                "$$"
-            ) and content.strip().endswith("$$")
+            is_block_math = content.strip().startswith("$$") and content.strip().endswith("$$")
             math_text = content.strip() if is_block_math else f"${content.strip()}$"
             markdown_content = Markdown(text=math_text, dark_mode=self.dark_mode)
             html = markdown_content.build_html()
