@@ -142,7 +142,34 @@ class WebPopupInTextEdit:
         self.hide_popup()
 
 
-class VimTextEdit(QTextEdit):
+class BaseEditor(QTextEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # Set fonts based on configuration
+        self.set_fonts()
+
+        # Load configuration
+
+    def set_fonts(self):
+        config = Config().config
+        font = QFont()
+        font_config = config["fonts"]["editor"]
+
+        # Set monospace font for the editor
+        font.setFamily(font_config["mono"])
+
+        # You can set a default size here, or use a size from the config if you add one
+        font.setPointSize(12)  # Default size, adjust as needed
+
+        self.setFont(font)
+
+    def update_fonts(self):
+        self.set_fonts()
+        self.update()
+
+
+class VimTextEdit(BaseEditor):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.vim_mode = False
@@ -153,12 +180,6 @@ class VimTextEdit(QTextEdit):
         self.g_pressed = False
         self.dark_mode = False
 
-        # Load configuration
-        self.config = Config().config
-
-        # Set fonts based on configuration
-        self.set_fonts()
-
         # Initialize the WebPopupInTextEdit
         self.web_popup = WebPopupInTextEdit(self)
 
@@ -166,22 +187,6 @@ class VimTextEdit(QTextEdit):
         self.cursorPositionChanged.connect(self.update_line_highlight)
         self.cursorPositionChanged.connect(self.web_popup.on_cursor_position_changed)
         self.textChanged.connect(self.web_popup.on_cursor_position_changed)
-
-    def set_fonts(self):
-        font = QFont()
-        font_config = self.config['fonts']['editor']
-        
-        # Set monospace font for the editor
-        font.setFamily(font_config['mono'])
-        
-        # You can set a default size here, or use a size from the config if you add one
-        font.setPointSize(12)  # Default size, adjust as needed
-        
-        self.setFont(font)
-
-    def update_fonts(self):
-        self.set_fonts()
-        self.update()
 
     def update_line_highlight(self):
         if self.vim_mode and not self.insert_mode:
@@ -332,5 +337,3 @@ class VimTextEdit(QTextEdit):
     def set_dark_mode(self, is_dark):
         self.dark_mode = is_dark
         self.web_popup.set_dark_mode(is_dark)
-
-
