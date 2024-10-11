@@ -1,4 +1,3 @@
-
 from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout, QWidget, QScrollBar
 from markdown_utils import WebEngineViewWithBaseUrl
 from PyQt6.QtCore import Qt, QSize, QPoint
@@ -19,10 +18,12 @@ from PyQt6.QtGui import (
 
 from regex_patterns import INLINE_MATH_PATTERN, BLOCK_MATH_PATTERN
 
+
 class WebViewPopups:
     """
     A class creating webview popups
     """
+
     def __init__(self, text_edit: QTextEdit):
         self.text_edit = text_edit
         self.frame = QFrame(self.text_edit)
@@ -52,7 +53,9 @@ class WebViewPopups:
 
     def show_popup(self, content, is_math=False):
         if is_math:
-            is_block_math = content.strip().startswith("$$") and content.strip().endswith("$$")
+            is_block_math = content.strip().startswith(
+                "$$"
+            ) and content.strip().endswith("$$")
             math_text = content.strip() if is_block_math else f"${content.strip()}$"
             markdown_content = Markdown(text=math_text, dark_mode=self.dark_mode)
             html = markdown_content.build_html()
@@ -103,13 +106,15 @@ class WebViewPopups:
         # Implement basic positioning logic here
         pass
 
+
 class AutoPopups(WebViewPopups):
     """
     A class creating auto popups
     """
+
     def __init__(self, text_edit: QTextEdit, pin_to_scrollbar: bool = True):
         super().__init__(text_edit)
-        
+
         if pin_to_scrollbar:
             on_scroll = self.update_popup_position_and_move_window
         else:
@@ -118,55 +123,143 @@ class AutoPopups(WebViewPopups):
         self.text_edit.horizontalScrollBar().valueChanged.connect(on_scroll)
         self.text_edit.resizeEvent = self.on_text_edit_resize
 
+    # NOTE Tieing this together in the higher level class makes sense
+    # Behaviour should be uniform
+    # TODO Do we want this behaviour though?
+    # Only makes sense to update on textEdit, not on cursor change
+    # Scrollbar change should be enough
     def update_popup_position_and_move_window(self):
-        self.on_cursor_position_changed()
+        raise NotImplementedError("Subclasses must implement this method")
 
     def on_cursor_position_changed(self):
-        # Implement cursor position change logic here
+        """
+        Action to be taken when the cursor position changes.
+        This shouldn't be needed for popup windows,
+        Scrollbar change should be enough. The `pin_to_scrollbar`
+        automatically calles `.update_popup_position_and_move_window`
+        when the scrollbar changes.
+
+        This method is just legacy at this stage.
+        """
+
         pass
 
     def on_text_edit_resize(self, event):
         self.update_popup_position()
         QTextEdit.resizeEvent(self.text_edit, event)
 
-    def is_cursor_inside(self):
+    def is_cursor_inside(self) -> bool | None:
         """
         Check if the cursor is inside the popup.
         """
         cursor = self.text_edit.textCursor()
-        cursor_pos = self.text_edit.viewport().mapToGlobal(self.text_edit.cursorRect(cursor).center())
-        return self.frame.geometry().contains(cursor_pos)
+        if vp := self.text_edit.viewport():
+            cursor_pos = vp.mapToGlobal(self.text_edit.cursorRect(cursor).center())
+            return self.frame.geometry().contains(cursor_pos)
+        else:
+            return None
+
+    def get_popup_position(self) -> tuple[int, int] | None:
+        """
+        Get the cursor position to show the popup.
+
+        Typically this will be below the Auto Environment.
+
+        Default implementation is to show the popup below the cursor.
+        """
+        cursor = self.text_edit.textCursor()
+        cursor_pos = self.text_edit.cursorRect(cursor).center()
+        if vp := self.text_edit.viewport():
+            cursor_pos = vp.mapToGlobal(cursor_pos)
+
+            text_edit_rect = self.text_edit.rect()
+            text_edit_global_rect = self.text_edit.mapToGlobal(text_edit_rect.topLeft())
+
+            new_x = text_edit_global_rect.x()
+            new_y = cursor_pos.y() + 10
+
+            return new_x, new_y
+        else:
+            return None
+
+    def update_popup_position(self):
+        if self.visible:
+            self.hide_popup()
+            co_ords = self.get_popup_position()
+            if co_ords:
+                # * unpack the tuple
+                new_x, new_y = co_ords
+                self.frame.move(new_x, new_y)
+
+                if self.text_edit.rect().contains(
+                    self.text_edit.mapFromGlobal(QPoint(new_x, new_y))
+                ):
+                    self.frame.show()
+                else:
+                    self.frame.hide()
+            else:
+                self.hide_popup()
+
+    # def get_region_content_regex():
+    #     pass
+
+    def update_popup_position_and_move_window(self):
+        cursor = self.text_edit.textCursor()
+        # The text in the region the popup will display
+        content = self.get_content(cursor)
+        if content is not None:
+            # Show the popup if we got something
+            self.show_popup(content, is_math=True)
+        else:
+            # Hide the popup if we didn't get anything
+            self.hide_popup()
+
+    def get_content(self, cursor):
+        """
+        Get the content to display in the popup.
+        """
+        raise NotImplementedError("Subclasses must implement this method")
+
+    def get_content_from_regex(self, cursor, pattern: re.Pattern[str]) -> str | None:
+        text = self.text_edit.toPlainText()
+        pos = cursor.position()
+
+        for match in pattern.finditer(text):
+            start, end = match.span()
+            if start <= pos <= end:
+                return match.group(0)
+
+        return None
+
 
 class MathAutoPopups(AutoPopups):
     """
     A class creating math auto popups based on Regex
     """
+
+    # TODO more can be separated out here
+    # like, update_popup_position simply needs
+    # Needs the text and the other methods
+    # will deal with it.
+    #
+    # This requires renaming get_math_content to get_content
+    #
+    # Get Popup Position can probably be moved out too
+    # This just sets it to the end of the block
+    # If we can pull out the text, we can pull out the end index
+    # The use of $$ is a bit of a problem here
+    # TODO Remove the use of $$ and use whatever method pulled out the text
+
     def __init__(self, text_edit: QTextEdit, pin_to_scrollbar: bool = True):
         super().__init__(text_edit, pin_to_scrollbar)
 
-    def on_cursor_position_changed(self):
-        cursor = self.text_edit.textCursor()
-        math_content = self.is_cursor_in_math_environment(cursor)
-        if math_content is not None:
-            self.show_popup(math_content, is_math=True)
+    def get_content(self, cursor):
+        # Try fo Block Math first
+        for ptn in [BLOCK_MATH_PATTERN, INLINE_MATH_PATTERN]:
+            if c := self.get_content_from_regex(cursor, INLINE_MATH_PATTERN):
+                return c
         else:
-            self.hide_popup()
-
-    def is_cursor_in_math_environment(self, cursor):
-        text = self.text_edit.toPlainText()
-        pos = cursor.position()
-
-        for match in BLOCK_MATH_PATTERN.finditer(text):
-            start, end = match.span()
-            if start <= pos <= end:
-                return match.group(0)
-
-        for match in INLINE_MATH_PATTERN.finditer(text):
-            start, end = match.span()
-            if start <= pos <= end:
-                return match.group(1)
-
-        return None
+            return None
 
     def get_math_block_end(self, content):
         text = self.text_edit.toPlainText()
@@ -178,37 +271,54 @@ class MathAutoPopups(AutoPopups):
             return closing_pos + 2
         return end_pos
 
-    def update_popup_position(self):
-        if self.visible:
-            self.hide_popup()
-            cursor = self.text_edit.textCursor()
-            math_content = self.is_cursor_in_math_environment(cursor)
-            if math_content is not None:
-                end_pos = self.get_math_block_end(math_content)
-                end_cursor = QTextCursor(self.text_edit.document())
-                end_cursor.setPosition(end_pos)
-                end_rect = self.text_edit.cursorRect(end_cursor)
+    def get_popup_position(self) -> tuple[int, int] | None:
+        """
+        Get the cursor position to show the popup.
 
-                viewport_pos = self.text_edit.viewport().mapToGlobal(end_rect.bottomRight())
+        Typically this will be below the Auto Environment.
+
+        Default implementation is to show the popup below the cursor.
+        """
+
+        cursor = self.text_edit.textCursor()
+        math_content = self.get_content(cursor)
+        if math_content:
+            end_pos = self.get_math_block_end(math_content)
+            end_cursor = QTextCursor(self.text_edit.document())
+            end_cursor.setPosition(end_pos)
+            end_rect = self.text_edit.cursorRect(end_cursor)
+
+            if vp := self.text_edit.viewport():
+                viewport_pos = vp.mapToGlobal(end_rect.bottomRight())
 
                 text_edit_rect = self.text_edit.rect()
-                text_edit_global_rect = self.text_edit.mapToGlobal(text_edit_rect.topLeft())
+                text_edit_global_rect = self.text_edit.mapToGlobal(
+                    text_edit_rect.topLeft()
+                )
 
-                max_y = text_edit_global_rect.y() + text_edit_rect.height() - self.frame.height()
+                max_y = (
+                    text_edit_global_rect.y()
+                    + text_edit_rect.height()
+                    - self.frame.height()
+                )
                 new_y = min(viewport_pos.y(), max_y)
 
-                new_x = max(text_edit_global_rect.x(), min(viewport_pos.x(), text_edit_global_rect.x() + text_edit_rect.width() - self.frame.width()))
-
-                self.frame.move(new_x, new_y)
-
-                if text_edit_rect.contains(self.text_edit.mapFromGlobal(QPoint(new_x, new_y))):
-                    self.frame.show()
-                else:
-                    self.frame.hide()
+                new_x = max(
+                    text_edit_global_rect.x(),
+                    min(
+                        viewport_pos.x(),
+                        text_edit_global_rect.x()
+                        + text_edit_rect.width()
+                        - self.frame.width(),
+                    ),
+                )
+                return new_x, new_y
             else:
-                self.hide_popup()
+                return None
+        else:
+            return None
 
-    def is_cursor_inside(self):
+    def is_cursor_inside(self) -> bool:
         """
         Check if the cursor is inside the math popup.
         """
@@ -216,4 +326,4 @@ class MathAutoPopups(AutoPopups):
             return False
 
         cursor = self.text_edit.textCursor()
-        return self.is_cursor_in_math_environment(cursor) is not None
+        return self.get_content(cursor) is not None
