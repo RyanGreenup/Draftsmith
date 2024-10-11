@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout
+from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout, QWidget
 from markdown_utils import WebEngineViewWithBaseUrl
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSize
 import re
 from markdown_utils import Markdown
 from config import Config
@@ -188,6 +188,8 @@ class VimTextEdit(BaseEditor):
         self.cursorPositionChanged.connect(self.web_popup.on_cursor_position_changed)
         self.textChanged.connect(self.web_popup.on_cursor_position_changed)
 
+        self.math_webviews = []
+
     def update_line_highlight(self):
         if self.vim_mode and not self.insert_mode:
             self.highlight_current_line()
@@ -334,6 +336,62 @@ class VimTextEdit(BaseEditor):
         self.web_popup.cleanup()
         super().closeEvent(event)
 
+    def insert_math_webviews(self):
+        # Clear existing math webviews
+        for webview in self.math_webviews:
+            self.document().removeChild(webview)
+        self.math_webviews.clear()
+
+        cursor = self.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        
+        while True:
+            # Find next math environment
+            cursor = self.document().find(BLOCK_MATH_PATTERN, cursor)
+            if cursor.isNull():
+                break
+
+            math_content = cursor.selectedText()
+            
+            # Create WebView for math content
+            math_webview = WebEngineViewWithBaseUrl(self)
+            markdown_content = Markdown(text=math_content, dark_mode=self.dark_mode)
+            html = markdown_content.build_html()
+            math_webview.setHtml(html)
+            
+            # Create a container widget for the WebView
+            container = QWidget(self)
+            layout = QVBoxLayout(container)
+            layout.addWidget(math_webview)
+            layout.setContentsMargins(0, 5, 0, 5)  # Add some vertical spacing
+            
+            # Insert the container into the document
+            cursor.insertBlock()
+            format = QTextCharFormat()
+            format.setObjectType(QTextFormat.ObjectTypes.UserObject + 1)  # Custom object type
+            cursor.insertText("\uFFFc", format)  # Object replacement character
+            
+            self.document().addChild(container)
+            container.setParent(self.document())
+            
+            # Set the size of the container
+            container.setFixedSize(QSize(self.width() - 20, 100))  # Adjust height as needed
+            
+            self.math_webviews.append(container)
+            
+            # Move cursor to end of inserted block
+            cursor.movePosition(QTextCursor.MoveOperation.NextBlock)
+
+        self.setTextCursor(cursor)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Resize math webviews when the editor is resized
+        for webview in self.math_webviews:
+            webview.setFixedWidth(self.width() - 20)
+
     def set_dark_mode(self, is_dark):
         self.dark_mode = is_dark
         self.web_popup.set_dark_mode(is_dark)
+        # Update existing math webviews
+        self.insert_math_webviews()
