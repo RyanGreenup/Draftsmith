@@ -65,13 +65,13 @@ class PopupManager:
 
         # Destroy and recreate the popup to get the correct size
 
-        if not self.size_already_set:  # Set this to False in the constructor
-            self.size_already_set = True
-            if page := self.popup_view.page():
-                if w := page.contentsSize().width():
-                    self.popup_view.setFixedWidth(int(w) + 10)
-                if h := page.contentsSize().height():
-                    self.popup_view.setFixedHeight(int(h) + 10)
+        # if not self.size_already_set:  # Set this to False in the constructor
+        #     self.size_already_set = True
+        if page := self.popup_view.page():
+            if w := page.contentsSize().width():
+                self.popup_view.setFixedWidth(int(w) + 10)
+            if h := page.contentsSize().height():
+                self.popup_view.setFixedHeight(int(h) + 10)
             # size = QSize(print(out.width()), int(out.height()))
             # self.frame.resize(size)
 
