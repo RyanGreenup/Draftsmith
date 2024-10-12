@@ -33,8 +33,6 @@ class PopupManager:
         self.frame.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.frame.hide()
 
-        self.popup_view.page().contentsSizeChanged.connect(self.adjust_popup_size)
-        self.visible = False
         self.dark_mode = False
 
     def show_popup(self, content, is_math=False):
@@ -55,11 +53,6 @@ class PopupManager:
             self.frame.hide()
             self.visible = False
 
-    def adjust_popup_size(self, size):
-        max_width, max_height = 600, 400
-        new_width = min(round(size.width()) + 40, max_width)  # Add 20 on each side
-        new_height = min(round(size.height()) + 40, max_height)  # Add 20 on each side
-        self.frame.resize(int(new_width), int(new_height))
 
     def set_dark_mode(self, is_dark):
         self.dark_mode = is_dark
