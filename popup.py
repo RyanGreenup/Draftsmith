@@ -14,10 +14,16 @@ from regex_patterns import INLINE_MATH_PATTERN, BLOCK_MATH_PATTERN
 class PopupManager:
     def __init__(self, text_edit: QTextEdit):
         self.text_edit = text_edit
+        self.create_frame()
+        self.dark_mode = False
+
+    def create_frame(self):
+        if hasattr(self, "frame"):
+            self.frame.hide()
+            self.frame.deleteLater()
         self.frame = QFrame(self.text_edit)
         self.frame.setFrameShape(QFrame.Shape.Box)
         self.frame.setLineWidth(1)
-        self.size_already_set = False
 
         layout = QVBoxLayout(self.frame)
         layout.setContentsMargins(1, 1, 1, 1)
@@ -35,12 +41,10 @@ class PopupManager:
         self.frame.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.frame.hide()
 
-        self.popup_view.loadFinished.connect(self.adjust_size)
-
-        self.dark_mode = False
-
     def build_popup(self):
-        return WebEngineViewWithBaseUrl(self.frame)
+        popup_view = WebEngineViewWithBaseUrl(self.frame)
+        popup_view.loadFinished.connect(self.adjust_size)
+        return popup_view
 
     def resize_from_js(self, sizes):
         width = sizes["width"]
@@ -76,7 +80,7 @@ class PopupManager:
             # self.frame.resize(size)
 
 
-    def show_popup(self, content, is_math=False):
+    def _show_popup(self, content, is_math=False):
         if is_math:
             is_block_math = content.strip().startswith("$$") and content.strip().endswith("$$")
             math_text = content.strip() if is_block_math else f"${content.strip()}$"
@@ -93,6 +97,12 @@ class PopupManager:
         if self.visible:
             self.frame.hide()
             self.visible = False
+
+    def show_popup(self, content, is_math=False):
+        self.create_frame()
+        self._show_popup(content, is_math)
+
+
 
 
     def set_dark_mode(self, is_dark):
