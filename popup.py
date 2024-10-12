@@ -91,7 +91,7 @@ class PopupPositioner:
         self.text_edit = text_edit
         self.popup_manager = popup_manager
 
-    def update_popup_position(self, content, start_pos, end_pos):
+    def update_popup_position(self, content: str, end_pos: int):
         end_cursor = QTextCursor(self.text_edit.document())
         end_cursor.setPosition(end_pos)
         end_rect = self.text_edit.cursorRect(end_cursor)
@@ -174,15 +174,15 @@ class AutoPopups:
             self.popup_manager.hide_popup()
             cursor = self.text_edit.textCursor()
             if content_and_indices := self.content_extractor.get_content(cursor):
-                content, start, end = content_and_indices
-                self.popup_positioner.update_popup_position(content, start, end)
+                content, _, end = content_and_indices
+                self.popup_positioner.update_popup_position(content, end)
 
     def update_popup_position_and_move_window(self):
         cursor = self.text_edit.textCursor()
         if content_and_indices := self.content_extractor.get_content(cursor):
-            content, start, end = content_and_indices
+            content, _, end = content_and_indices
             self.popup_manager.show_popup(content, is_math=True)
-            self.popup_positioner.update_popup_position(content, start, end)
+            self.popup_positioner.update_popup_position(content, end)
         else:
             self.popup_manager.hide_popup()
 
