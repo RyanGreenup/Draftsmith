@@ -220,3 +220,7 @@ class AutoPopups:
 class MathAutoPopups(AutoPopups):
     def __init__(self, text_edit: QTextEdit, pin_to_scrollbar: bool = True):
         super().__init__(text_edit, pin_to_scrollbar)
+        self.text_edit.cursorPositionChanged.connect(self.on_cursor_position_changed)
+
+    def on_cursor_position_changed(self):
+        self.on_text_changed()
