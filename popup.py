@@ -43,7 +43,11 @@ class PopupManager:
 
     def build_popup(self):
         popup_view = WebEngineViewWithBaseUrl(self.frame)
-        popup_view.loadFinished.connect(self.adjust_size)
+
+        # This ccauses flickering which is annoying
+        popup_view.setFixedWidth(100)
+        popup_view.setFixedHeight(100)
+        # popup_view.loadFinished.connect(self.adjust_size)
         return popup_view
 
     def resize_from_js(self, sizes):
