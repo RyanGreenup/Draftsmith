@@ -1,20 +1,11 @@
-import sys
-from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout, QWidget, QScrollBar
+from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout
 from markdown_utils import WebEngineViewWithBaseUrl
-from PyQt6.QtCore import Qt, QSize, QPoint
+from PyQt6.QtCore import Qt, QPoint
 import re
 from markdown_utils import Markdown
-from config import Config
 
-from PyQt6.QtCore import Qt, QRegularExpression
 from PyQt6.QtGui import (
-    QSyntaxHighlighter,
-    QTextCharFormat,
-    QFont,
-    QColor,
-    QKeyEvent,
     QTextCursor,
-    QTextFormat,
 )
 
 from regex_patterns import INLINE_MATH_PATTERN, BLOCK_MATH_PATTERN
