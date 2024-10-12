@@ -237,8 +237,11 @@ class MultiMathPopups:
         self.text_edit.verticalScrollBar().valueChanged.connect(self.update_popups)
         self.text_edit.horizontalScrollBar().valueChanged.connect(self.update_popups)
         self.text_edit.resizeEvent = self.on_text_edit_resize
+        self.enabled = False
 
     def update_popups(self):
+        if not self.enabled:
+            return
         # Remove existing popups
         for popup in self.popups:
             popup.cleanup()
@@ -267,3 +270,10 @@ class MultiMathPopups:
         for popup in self.popups:
             popup.cleanup()
         self.popups.clear()
+
+    def toggle(self):
+        self.enabled = not self.enabled
+        if self.enabled:
+            self.update_popups()
+        else:
+            self.cleanup()

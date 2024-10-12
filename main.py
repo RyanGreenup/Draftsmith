@@ -119,6 +119,12 @@ class MarkdownEditor(QWidget):
         if allow_remote_content:
             set_web_security_policies(self.preview)
 
+        self.math_popups = MultiMathPopups(self.editor)
+        
+        # Add shortcut for toggling math popups
+        self.toggle_math_popups_shortcut = QShortcut(QKeySequence("Ctrl+M"), self)
+        self.toggle_math_popups_shortcut.activated.connect(self.toggle_math_popups)
+
     def setup_ui(self):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
@@ -192,6 +198,11 @@ class MarkdownEditor(QWidget):
             )
             html = markdown_content.build_html(local_katex=self.local_katex)
             self.preview.setHtml(html)
+
+    def toggle_math_popups(self):
+        self.math_popups.toggle()
+        status = "enabled" if self.math_popups.enabled else "disabled"
+        popup_notification(f"Multiple math popups {status}").show_timeout()
 
 
 class Icon(Enum):
@@ -606,6 +617,13 @@ class MainWindow(QMainWindow):
                     self.open_files_palette,
                     "Ctrl+P",
                 ),
+                "Toggle Math Popups": self.build_action(
+                    Icon.PREVIEW.value,  # You may want to use a different icon
+                    "Toggle Math Popups",
+                    "Toggle display of multiple math popups",
+                    self.toggle_math_popups,
+                    "Ctrl+M",
+                ),
                 "Tabs": {
                     "previous_tab": self.build_action(
                         Icon.PREVIOUS_TAB.value,
@@ -761,6 +779,11 @@ class MainWindow(QMainWindow):
 
     def open_files_palette(self):
         self.files_palette.open()
+
+    def toggle_math_popups(self):
+        current_editor = self.tab_widget.currentWidget()
+        if current_editor:
+            current_editor.toggle_math_popups()
 
     def collect_actions_from_menu(self, menu_dict):
         actions = []
