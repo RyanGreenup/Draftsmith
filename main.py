@@ -198,8 +198,6 @@ class MarkdownEditor(QWidget):
 
     def toggle_math_popups(self):
         self.math_popups.toggle()
-        status = "enabled" if self.math_popups.enabled else "disabled"
-        popup_notification(f"Multiple math popups {status}").show_timeout()
 
 
 class Icon(Enum):
