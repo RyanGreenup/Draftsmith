@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QTextEdit, QFrame, QVBoxLayout
+from PyQt6.sip import delete
 from markdown_utils import WebEngineViewWithBaseUrl
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import QSize, Qt, QPoint
 import re
 from markdown_utils import Markdown
 
@@ -16,11 +17,12 @@ class PopupManager:
         self.frame = QFrame(self.text_edit)
         self.frame.setFrameShape(QFrame.Shape.Box)
         self.frame.setLineWidth(1)
+        self.size_already_set = False
 
         layout = QVBoxLayout(self.frame)
         layout.setContentsMargins(1, 1, 1, 1)
 
-        self.popup_view = WebEngineViewWithBaseUrl(self.frame)
+        self.popup_view = self.build_popup()
         layout.addWidget(self.popup_view)
 
         self.frame.setLayout(layout)
@@ -33,7 +35,46 @@ class PopupManager:
         self.frame.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.frame.hide()
 
+        self.popup_view.loadFinished.connect(self.adjust_size)
+
         self.dark_mode = False
+
+    def build_popup(self):
+        return WebEngineViewWithBaseUrl(self.frame)
+
+    def resize_from_js(self, sizes):
+        width = sizes["width"]
+        height = sizes["height"]
+        self.popup_view.setFixedWidth(int(width))
+        self.popup_view.setFixedHeight(int(height))
+
+    def adjust_size(self):
+        # Reset the popup size to the size of the content
+        # self.popup_view.page().runJavaScript(
+        #     """
+        #     function getDocumentSize() {
+        #         return {
+        #             width: document.documentElement.scrollWidth,
+        #             height: document.documentElement.scrollHeight
+        #         };
+        #     }
+        #     getDocumentSize();
+        #     """,
+        #     self.resize_from_js,
+        # )
+
+        # Destroy and recreate the popup to get the correct size
+
+        if not self.size_already_set:  # Set this to False in the constructor
+            self.size_already_set = True
+            if page := self.popup_view.page():
+                if w := page.contentsSize().width():
+                    self.popup_view.setFixedWidth(int(w) + 10)
+                if h := page.contentsSize().height():
+                    self.popup_view.setFixedHeight(int(h) + 10)
+            # size = QSize(print(out.width()), int(out.height()))
+            # self.frame.resize(size)
+
 
     def show_popup(self, content, is_math=False):
         if is_math:
