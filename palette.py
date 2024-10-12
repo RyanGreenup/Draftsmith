@@ -327,7 +327,6 @@ class SearchFilePalette(OpenFilePalette):
         current_dir = os.getcwd()
         with FTS([".md"], current_dir) as fts:
             self.filtered_items = fts.search(text)
-        print(self.filtered_items)
 
         self._update_list_widget()
         self.highlight_first_item()
