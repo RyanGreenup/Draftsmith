@@ -290,6 +290,10 @@ class MainWindow(QMainWindow):
         # Connect tab change signal
         self.tab_widget.currentChanged.connect(self.update_current_tab_actions)
 
+    def open_new_window(self):
+        new_window = MainWindow()
+        new_window.show()
+
     def insert_text(self, text):
         current_editor = self.tab_widget.currentWidget()
         if current_editor:
@@ -512,6 +516,13 @@ class MainWindow(QMainWindow):
 
         menu_dict = {
             "File": {
+                "new_window": self.build_action(
+                    Icon.NEW_TAB.value,
+                    "New Window",
+                    "Open a new window",
+                    self.open_new_window,
+                    "Ctrl+Shift+N",
+                ),
                 "new_tab": self.build_action(
                     Icon.NEW_TAB.value,
                     "New Tab",
@@ -672,6 +683,7 @@ class MainWindow(QMainWindow):
         # Flatten dictionary structure
         self.fill_toolbar(
             [
+                menu_dict["File"]["new_window"],
                 menu_dict["File"]["new_tab"],
                 menu_dict["File"]["close_tab"],
                 "sep",
