@@ -249,10 +249,10 @@ class MultiMathPopups:
         for content, _, end in all_content:
             popup_manager = PopupManager(self.text_edit)
             popup_positioner = PopupPositioner(self.text_edit, popup_manager)
-            
+
             popup_manager.show_popup(content, is_math=True)
             popup_positioner.update_popup_position(content, end)
-            
+
             self.popups.append(popup_manager)
 
     def on_text_edit_resize(self, event):
