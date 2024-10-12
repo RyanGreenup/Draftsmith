@@ -122,6 +122,31 @@ class MarkdownEditor(QWidget):
 
         self.math_popups = MultiMathPopups(self.editor)
 
+    def get_layout_state(self):
+        return {
+            "preview_visible": self.preview_visible,
+            "preview_overlay": self.preview_overlay
+        }
+
+    def set_layout_state(self, state):
+        self.preview_visible = state["preview_visible"]
+        self.preview_overlay = state["preview_overlay"]
+        self.update_layout()
+
+    def update_layout(self):
+        if self.preview_overlay:
+            self.editor.hide()
+            self.preview.show()
+        else:
+            self.editor.show()
+            if self.preview_visible:
+                self.preview.show()
+                self.splitter.setSizes([300, 300])
+            else:
+                self.preview.hide()
+                self.splitter.setSizes([600, 0])
+        self.update_preview()
+
     def setup_ui(self):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
@@ -326,15 +351,6 @@ class MainWindow(QMainWindow):
                 self, "Open File", "", "Markdown Files (*.md);;All Files (*)"
             )
 
-        if focus_tab:
-            # Check if the file is already open in any tab
-            for index in range(self.tab_widget.count()):
-                editor = self.tab_widget.widget(index)
-                if editor.current_file == file_path:
-                    # File is already open; focus the tab
-                    self.tab_widget.setCurrentIndex(index)
-                    return
-
         if file_path:
             try:
                 with open(file_path, "r", encoding="utf-8") as file:
@@ -343,19 +359,29 @@ class MainWindow(QMainWindow):
                 # Get the current tab's MarkdownEditor
                 current_editor = self.tab_widget.currentWidget()
 
+                # Store the current layout state
+                layout_state = current_editor.get_layout_state() if current_editor else None
+
                 # If there's no current tab or the current tab is not empty, create a new tab
                 if not current_editor or current_editor.editor.toPlainText().strip():
                     self.new_tab()
                     current_editor = self.tab_widget.currentWidget()
 
                 current_editor.editor.setPlainText(content)
-                current_editor.current_file = file_path  # Set the current_file here
+                current_editor.current_file = file_path
+
+                # Apply the stored layout state
+                if layout_state:
+                    current_editor.set_layout_state(layout_state)
 
                 # Update the tab text and window title
                 self.tab_widget.setTabText(
                     self.tab_widget.currentIndex(), os.path.basename(file_path)
                 )
                 self.setWindowTitle(f"Markdown Editor - {os.path.basename(file_path)}")
+
+                if focus_tab:
+                    self.tab_widget.setCurrentWidget(current_editor)
 
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Failed to open file: {str(e)}")
@@ -806,7 +832,7 @@ class PreviewPage(QWebEnginePage):
                 href = url.toLocalFile()
             if href and os.path.isfile(href):
                 if self.open_file_callback:
-                    self.open_file_callback(href)
+                    self.open_file_callback(href, focus_tab=True)
                 return False  # Prevent the webview from navigating to the link
         return super().acceptNavigationRequest(url, type, isMainFrame)
 
