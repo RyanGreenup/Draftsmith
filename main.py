@@ -19,6 +19,7 @@ from PyQt6.QtCore import QSize, QUrl, Qt
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineSettings, QWebEnginePage
 from vimkeys import VimTextEdit
+from popup import MultiMathPopups
 from pygments.formatters import HtmlFormatter
 import markdown
 from pathlib import Path
@@ -120,10 +121,6 @@ class MarkdownEditor(QWidget):
             set_web_security_policies(self.preview)
 
         self.math_popups = MultiMathPopups(self.editor)
-        
-        # Add shortcut for toggling math popups
-        self.toggle_math_popups_shortcut = QShortcut(QKeySequence("Ctrl+M"), self)
-        self.toggle_math_popups_shortcut.activated.connect(self.toggle_math_popups)
 
     def setup_ui(self):
         # Create the editor and preview widgets
