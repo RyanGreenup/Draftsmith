@@ -96,6 +96,8 @@ class PopupPositioner:
         end_cursor.setPosition(end_pos)
         end_rect = self.text_edit.cursorRect(end_cursor)
 
+        self.popup_manager.frame.hide()
+
         if vp := self.text_edit.viewport():
             viewport_pos = vp.mapToGlobal(end_rect.bottomRight())
 
