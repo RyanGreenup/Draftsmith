@@ -154,6 +154,16 @@ class ContentExtractor:
                 return match.group(0), start, end
         return None
 
+    def get_all_math_content(self) -> list[tuple[str, int, int]]:
+        text = self.text_edit.toPlainText()
+        all_content = []
+        for pattern in [BLOCK_MATH_PATTERN, INLINE_MATH_PATTERN]:
+            for match in pattern.finditer(text):
+                content = match.group(0)
+                start, end = match.span()
+                all_content.append((content, start, end))
+        return all_content
+
 class AutoPopups:
     def __init__(self, text_edit: QTextEdit, pin_to_scrollbar: bool = True):
         self.text_edit = text_edit
@@ -217,3 +227,43 @@ class MathAutoPopups(AutoPopups):
 
     def on_cursor_position_changed(self):
         self.on_text_changed()
+
+class MultiMathPopups:
+    def __init__(self, text_edit: QTextEdit):
+        self.text_edit = text_edit
+        self.content_extractor = ContentExtractor(text_edit)
+        self.popups = []
+        self.text_edit.textChanged.connect(self.update_popups)
+        self.text_edit.verticalScrollBar().valueChanged.connect(self.update_popups)
+        self.text_edit.horizontalScrollBar().valueChanged.connect(self.update_popups)
+        self.text_edit.resizeEvent = self.on_text_edit_resize
+
+    def update_popups(self):
+        # Remove existing popups
+        for popup in self.popups:
+            popup.cleanup()
+        self.popups.clear()
+
+        # Create new popups for all math content
+        all_content = self.content_extractor.get_all_math_content()
+        for content, _, end in all_content:
+            popup_manager = PopupManager(self.text_edit)
+            popup_positioner = PopupPositioner(self.text_edit, popup_manager)
+            
+            popup_manager.show_popup(content, is_math=True)
+            popup_positioner.update_popup_position(content, end)
+            
+            self.popups.append(popup_manager)
+
+    def on_text_edit_resize(self, event):
+        self.update_popups()
+        QTextEdit.resizeEvent(self.text_edit, event)
+
+    def set_dark_mode(self, is_dark: bool):
+        for popup in self.popups:
+            popup.set_dark_mode(is_dark)
+
+    def cleanup(self):
+        for popup in self.popups:
+            popup.cleanup()
+        self.popups.clear()
