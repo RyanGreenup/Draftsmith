@@ -94,9 +94,10 @@ class PopupManager:
         self.frame.show()
 
     def hide_popup(self):
-        if self.visible:
-            self.frame.hide()
-            self.visible = False
+        if hasattr(self, "visible") and hasattr(self, "frame"):
+            if self.visible:
+                self.frame.hide()
+                self.visible = False
 
     def show_popup(self, content, is_math=False):
         self.create_frame()
