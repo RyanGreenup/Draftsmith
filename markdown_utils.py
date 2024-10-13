@@ -70,6 +70,8 @@ class Markdown:
         html_body = markdown.markdown(
             text,
             extensions=[
+                "attr_list",
+                'markdown_captions',
                 "markdown_gfm_admonition",
                 "codehilite",
                 "fenced_code",
