@@ -24,7 +24,7 @@ class Config:
         self.data_home = self.xdg_data_home / self.app_name
 
         # Default CSS path
-        self.default_style_path = Path(__file__).parent / self.DEFAULT_STYLE
+        self.default_style_path = Path(__file__).parent / "assets" / "styles"
 
         # Load or initialize configuration
         self.config = self.get_config()
@@ -39,6 +39,7 @@ class Config:
             "remote_katex": True,
             "disable_remote_content": False,
             "link_revisits_tab": False,
+            # Directory containing CSS files
             "css_path": str(css_path.resolve()),
             # Defaults to a Side by Side Preview (Toggle with Ctrl-G)
             "no_side_by_side": True,
@@ -69,8 +70,8 @@ class Config:
         # Ensure the data home directory exists
         self.data_home.mkdir(parents=True, exist_ok=True)
 
-        # Copy the default CSS file to the data home directory
-        shutil.copy(self.default_style_path, self.data_home)
+        # Copy the default CSS directory underneath the data home directory
+        shutil.copytree(self.default_style_path, self.data_home / "styles")
 
     def load_config(self):
         """

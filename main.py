@@ -94,14 +94,14 @@ class MarkdownEditor(QWidget):
 
     def __init__(
         self,
-        css_file=None,
+        css_dir=None,
         base_url=None,
         local_katex=True,
         allow_remote_content=True,
         open_file_callback=None,  # Add this parameter
     ):
         super().__init__()
-        self.css_file = css_file
+        self.css_dir = css_dir
         self.dark_mode = False
         self.preview_visible = True
         self.preview_overlay = False
@@ -216,7 +216,7 @@ class MarkdownEditor(QWidget):
         if self.preview_visible or self.preview_overlay:
             text = self.editor.toPlainText()
             markdown_content = Markdown(
-                text=text, css_path=self.css_file, dark_mode=self.dark_mode
+                text=text, css_path=self.css_dir, dark_mode=self.dark_mode
             )
             html = markdown_content.build_html(local_katex=self.local_katex)
             self.preview.setHtml(html)
@@ -258,7 +258,6 @@ class MainWindow(QMainWindow):
 
         # Use args here
         self.css_path = args.css
-        self.store_css_content()
 
         # Create a QTabWidget
         self.tab_widget = QTabWidget()
@@ -301,10 +300,6 @@ class MainWindow(QMainWindow):
             cursor.insertText(text)
             current_editor.editor.setTextCursor(cursor)
 
-    def store_css_content(self):
-        with open(self.css_path, "r") as file:
-            self.css_content = file.read()
-
     # TODO Remove this?
     def update_current_tab_actions(self):
         current_editor = self.tab_widget.currentWidget()
@@ -335,7 +330,7 @@ class MainWindow(QMainWindow):
         # Create a new MarkdownEditor
         base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
         markdown_editor = MarkdownEditor(
-            css_file=args.css,
+            css_dir=args.css,
             base_url=base_url,
             local_katex=self.local_katex,
             allow_remote_content=not args.disable_remote_content,
@@ -865,7 +860,9 @@ if __name__ == "__main__":
         "--css",
         type=str,
         default=config.config.get("css_path", None),
-        help="Path to a CSS file for the markdown preview",
+        help=("Path to a directory containing css files for the markdown preview"
+              "CSS files are applied alphabetically"
+              ),
     )
     parser.add_argument(
         "--remote-katex",

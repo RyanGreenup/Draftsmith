@@ -100,10 +100,15 @@ class Markdown:
 
     def build_css(self) -> str:
         css_styles = ""
+        # TODO CSS should be a class that reads the CSS once and caches it
+        # Use @property to make it a read-only attribute with a setter and getter
         if self.css_path:
-            with open(self.css_path, "r") as file:
-                css_styles += file.read()
-
+            # Glob the css_path
+            if self.css_path.is_dir():
+                css_files = self.css_path.glob("*.css")
+                for css_file in css_files:
+                    with open(css_file, "r") as file:
+                        css_styles += file.read()
         # Add Pygments CSS for code highlighting
         formatter = HtmlFormatter(style="default" if not self.dark_mode else "monokai")
         pygments_css = formatter.get_style_defs(".highlight")
