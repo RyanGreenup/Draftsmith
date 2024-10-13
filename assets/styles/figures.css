@@ -12,6 +12,7 @@ img {
     max-width: 100%; /* Ensure images resize responsively */
     height: auto; /* Maintain image aspect ratio */
     display: block; /* Remove bottom space under image */
+    border-bottom: 1px solid #aaa; /* Border separating image from caption */
 }
 
 figcaption {
@@ -19,6 +20,5 @@ figcaption {
     color: #555; /* Medium gray caption text */
     padding: 5px;
     background-color: #f0f0f0; /* Light gray background for captions */
-    border-top: 1px solid #aaa; /* Border separating image from caption */
 }
 

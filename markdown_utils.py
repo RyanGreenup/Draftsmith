@@ -1,5 +1,6 @@
 from PyQt6.QtCore import QUrl
 import markdown_gfm_admonition
+from markdown_extension_image_size_and_caption import ImageWithFigureExtension
 from PyQt6.QtWebEngineCore import QWebEngineSettings
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from pygments.formatters import HtmlFormatter
@@ -71,7 +72,8 @@ class Markdown:
             text,
             extensions=[
                 "attr_list",
-                "markdown_captions",
+                ImageWithFigureExtension(),
+                # "markdown_captions",
                 "def_list",
                 "nl2br",
                 "toc",
