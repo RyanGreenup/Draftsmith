@@ -69,3 +69,56 @@
     margin-top: 10px; /* Space between paragraphs */
 }
 
+
+/* Default light mode styles remain the same */
+
+   /* .dark-mode class styles for dark mode */
+   .dark-mode .admonition.note {
+       border-left-color: #80bfff;
+       background-color: #1a2740;
+   }
+
+   .dark-mode .admonition.note .admonition-title {
+       color: #bbdfff;
+   }
+
+   .dark-mode .admonition.tip {
+       border-left-color: #77d977;
+       background-color: #1a3326;
+   }
+
+   .dark-mode .admonition.tip .admonition-title {
+       color: #a8e3a8;
+   }
+
+   .dark-mode .admonition.important {
+       border-left-color: #ffb84d;
+       background-color: #332a1a;
+   }
+
+   .dark-mode .admonition.important .admonition-title {
+       color: #ffd480;
+   }
+
+   .dark-mode .admonition.warning {
+       border-left-color: #ff6b6b;
+       background-color: #402424;
+   }
+
+   .dark-mode .admonition.warning .admonition-title {
+       color: #ff9e9e;
+   }
+
+   .dark-mode .admonition.caution {
+       border-left-color: #ffe066;
+       background-color: #403a26;
+   }
+
+   .dark-mode .admonition.caution .admonition-title {
+       color: #ffea99;
+   }
+
+   .dark-mode .admonition p {
+       color: #ddd;
+   }
+

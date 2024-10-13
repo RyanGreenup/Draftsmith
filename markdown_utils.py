@@ -178,6 +178,10 @@ class Markdown:
             local=local_katex
         )
 
+        # Allow separate dark mode styles
+        if self.dark_mode:
+            html_body = f'<div class="dark-mode">{html_body}</div>'
+
         html = f"""
         <!DOCTYPE html>
         <html>
