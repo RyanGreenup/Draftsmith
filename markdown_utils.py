@@ -1,4 +1,5 @@
 from PyQt6.QtCore import QUrl
+import markdown_gfm_admonition
 from PyQt6.QtWebEngineCore import QWebEngineSettings
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from pygments.formatters import HtmlFormatter
@@ -69,6 +70,7 @@ class Markdown:
         html_body = markdown.markdown(
             text,
             extensions=[
+                "markdown_gfm_admonition",
                 "codehilite",
                 "fenced_code",
                 "tables",
