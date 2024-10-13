@@ -72,6 +72,7 @@ class Markdown:
             extensions=[
                 "attr_list",
                 'markdown_captions',
+                'pymdownx.tasklist',
                 "markdown_gfm_admonition",
                 "codehilite",
                 "fenced_code",
