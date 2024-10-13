@@ -52,8 +52,8 @@ class Config:
                     "mono": "fira code",
                     "sans": "fira sans",
                     "serif": "fira sans",
-                    }
                 }
+            },
         }
 
     def write_default_config(self):

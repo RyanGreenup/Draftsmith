@@ -247,14 +247,18 @@ class VimTextEdit(BaseEditor):
             # Insert the container into the document
             cursor.insertBlock()
             format = QTextCharFormat()
-            format.setObjectType(QTextFormat.ObjectTypes.UserObject + 1)  # Custom object type
+            format.setObjectType(
+                QTextFormat.ObjectTypes.UserObject + 1
+            )  # Custom object type
             cursor.insertText("\uFFFc", format)  # Object replacement character
 
             self.document().addChild(container)
             container.setParent(self.document())
 
             # Set the size of the container
-            container.setFixedSize(QSize(self.width() - 20, 100))  # Adjust height as needed
+            container.setFixedSize(
+                QSize(self.width() - 20, 100)
+            )  # Adjust height as needed
 
             self.math_webviews.append(container)
 

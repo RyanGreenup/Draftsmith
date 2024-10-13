@@ -11,6 +11,7 @@ from PyQt6.QtGui import (
 
 from regex_patterns import INLINE_MATH_PATTERN, BLOCK_MATH_PATTERN
 
+
 class PopupManager:
     def __init__(self, text_edit: QTextEdit):
         self.text_edit = text_edit
@@ -83,10 +84,11 @@ class PopupManager:
             # size = QSize(print(out.width()), int(out.height()))
             # self.frame.resize(size)
 
-
     def _show_popup(self, content, is_math=False):
         if is_math:
-            is_block_math = content.strip().startswith("$$") and content.strip().endswith("$$")
+            is_block_math = content.strip().startswith(
+                "$$"
+            ) and content.strip().endswith("$$")
             math_text = content.strip() if is_block_math else f"${content.strip()}$"
             markdown_content = Markdown(text=math_text, dark_mode=self.dark_mode)
             html = markdown_content.build_html()
@@ -106,9 +108,6 @@ class PopupManager:
     def show_popup(self, content, is_math=False):
         self.create_frame()
         self._show_popup(content, is_math)
-
-
-
 
     def set_dark_mode(self, is_dark):
         self.dark_mode = is_dark
@@ -134,6 +133,7 @@ class PopupManager:
     def cleanup(self):
         self.frame.deleteLater()
 
+
 class PopupPositioner:
     def __init__(self, text_edit: QTextEdit, popup_manager: PopupManager):
         self.text_edit = text_edit
@@ -152,23 +152,32 @@ class PopupPositioner:
             text_edit_rect = self.text_edit.rect()
             text_edit_global_rect = self.text_edit.mapToGlobal(text_edit_rect.topLeft())
 
-            max_y = text_edit_global_rect.y() + text_edit_rect.height() - self.popup_manager.frame.height()
+            max_y = (
+                text_edit_global_rect.y()
+                + text_edit_rect.height()
+                - self.popup_manager.frame.height()
+            )
             new_y = min(viewport_pos.y(), max_y)
 
             new_x = max(
                 text_edit_global_rect.x(),
                 min(
                     viewport_pos.x() - self.popup_manager.frame.width(),
-                    text_edit_global_rect.x() + text_edit_rect.width() - self.popup_manager.frame.width(),
+                    text_edit_global_rect.x()
+                    + text_edit_rect.width()
+                    - self.popup_manager.frame.width(),
                 ),
             )
 
             self.popup_manager.frame.move(new_x, new_y)
 
-            if self.text_edit.rect().contains(self.text_edit.mapFromGlobal(QPoint(new_x, new_y))):
+            if self.text_edit.rect().contains(
+                self.text_edit.mapFromGlobal(QPoint(new_x, new_y))
+            ):
                 self.popup_manager.frame.show()
             else:
                 self.popup_manager.frame.hide()
+
 
 class CursorTracker:
     def __init__(self):
@@ -182,6 +191,7 @@ class CursorTracker:
     def was_cursor_inside(self):
         return self.cursor_history[0]
 
+
 class ContentExtractor:
     def __init__(self, text_edit: QTextEdit):
         self.text_edit = text_edit
@@ -192,7 +202,9 @@ class ContentExtractor:
                 return content
         return None
 
-    def get_content_from_regex(self, cursor, pattern: re.Pattern[str]) -> tuple[str, int, int] | None:
+    def get_content_from_regex(
+        self, cursor, pattern: re.Pattern[str]
+    ) -> tuple[str, int, int] | None:
         text = self.text_edit.toPlainText()
         pos = cursor.position()
 
@@ -211,6 +223,7 @@ class ContentExtractor:
                 start, end = match.span()
                 all_content.append((content, start, end))
         return all_content
+
 
 class AutoPopups:
     def __init__(self, text_edit: QTextEdit, pin_to_scrollbar: bool = True):
@@ -268,6 +281,7 @@ class AutoPopups:
 
         self.cursor_tracker.last_cursor_position = current_position
 
+
 class MathAutoPopups(AutoPopups):
     def __init__(self, text_edit: QTextEdit, pin_to_scrollbar: bool = True):
         super().__init__(text_edit, pin_to_scrollbar)
@@ -275,6 +289,7 @@ class MathAutoPopups(AutoPopups):
 
     def on_cursor_position_changed(self):
         self.on_text_changed()
+
 
 class MultiMathPopups:
     def __init__(self, text_edit: QTextEdit):

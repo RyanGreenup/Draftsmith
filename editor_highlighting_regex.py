@@ -75,7 +75,7 @@ class MarkdownHighlighter(QSyntaxHighlighter):
         # Wikilinks
         self.highlightingRules.append(
             (QRegularExpression("\\[\\[.*?\\]\\]"), linkFormat)
-            )
+        )
 
         # Image format
         imageFormat = QTextCharFormat()

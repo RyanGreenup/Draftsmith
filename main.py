@@ -73,9 +73,6 @@ def get_dark_palette():
     return dark_palette
 
 
-
-
-
 class MarkdownEditor(QWidget):
     """A QWidget containing a Markdown editor with toggleable live preview.
 
@@ -125,7 +122,7 @@ class MarkdownEditor(QWidget):
     def get_layout_state(self):
         return {
             "preview_visible": self.preview_visible,
-            "preview_overlay": self.preview_overlay
+            "preview_overlay": self.preview_overlay,
         }
 
     def set_layout_state(self, state):
@@ -359,7 +356,9 @@ class MainWindow(QMainWindow):
                 current_editor = self.tab_widget.currentWidget()
 
                 # Store the current layout state
-                layout_state = current_editor.get_layout_state() if current_editor else None
+                layout_state = (
+                    current_editor.get_layout_state() if current_editor else None
+                )
 
                 # If there's no current tab or the current tab is not empty, create a new tab
                 if not current_editor or current_editor.editor.toPlainText().strip():
@@ -860,9 +859,10 @@ if __name__ == "__main__":
         "--css",
         type=str,
         default=config.config.get("css_path", None),
-        help=("Path to a directory containing css files for the markdown preview"
-              "CSS files are applied alphabetically"
-              ),
+        help=(
+            "Path to a directory containing css files for the markdown preview"
+            "CSS files are applied alphabetically"
+        ),
     )
     parser.add_argument(
         "--remote-katex",

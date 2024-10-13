@@ -3,7 +3,7 @@ from tree_sitter import Language, Parser
 import os
 
 # Specify the path to the compiled shared library
-MARKDOWN_LANGUAGE = Language('libtree-sitter-markdown.so')
+MARKDOWN_LANGUAGE = Language("libtree-sitter-markdown.so")
 
 
 class MarkdownTSHighlighter(QSyntaxHighlighter):
@@ -17,7 +17,8 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
         self.parser.set_language(MARKDOWN_LANGUAGE)
 
         # Compile tree-sitter queries for Markdown elements
-        self.query = MARKDOWN_LANGUAGE.query("""
+        self.query = MARKDOWN_LANGUAGE.query(
+            """
         ; Headings
         (atx_heading) @heading
         (setext_heading) @heading
@@ -49,7 +50,8 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
 
         ; Thematic Breaks
         (thematic_break) @thematic_break
-        """)
+        """
+        )
 
         # Define text formats for different markdown elements
         self.formats = {}
@@ -119,7 +121,7 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
     def parse_document(self):
         """Parse the entire document and build the syntax tree."""
         text = self.document().toPlainText()
-        self.tree = self.parser.parse(bytes(text, 'utf-8'))
+        self.tree = self.parser.parse(bytes(text, "utf-8"))
         self.byte_to_char = self.build_byte_to_char_map(text)
 
     def rehighlight(self):
@@ -159,7 +161,6 @@ class MarkdownTSHighlighter(QSyntaxHighlighter):
                 fmt = self.formats.get(capture_name)
                 if fmt:
                     self.setFormat(relative_start, length, fmt)
-
 
     def highlight_node(self, node, text):
         # Check if the node type has a corresponding format
