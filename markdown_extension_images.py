@@ -44,6 +44,7 @@ class ImageWithAttrExtension(Extension):
 
     <img src="image.png" alt="Alt text" width="50%" height="100px">
     """
+
     def extendMarkdown(self, md):
         # Register the inline pattern with the markdown instance
         md.inlinePatterns.register(
