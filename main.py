@@ -91,6 +91,7 @@ class MarkdownEditor(QWidget):
 
     def __init__(
         self,
+        config,
         css_dir=None,
         base_url=None,
         local_katex=True,
@@ -98,6 +99,7 @@ class MarkdownEditor(QWidget):
         open_file_callback=None,  # Add this parameter
     ):
         super().__init__()
+        self.config = config
         self.css_dir = css_dir
         self.dark_mode = False
         self.preview_visible = True
@@ -148,7 +150,7 @@ class MarkdownEditor(QWidget):
         # Create the editor and preview widgets
         self.editor = VimTextEdit()
         self.preview = WebEngineViewWithBaseUrl()
-        if config.config.get("no_side_by_side"):
+        if self.config.config.get("no_side_by_side"):
             self.preview.hide()
 
         # Set up the custom page with the callback and base directory
@@ -245,8 +247,9 @@ class Icon(Enum):
 class MainWindow(QMainWindow):
     """Main window containing the Markdown editor."""
 
-    def __init__(self):
+    def __init__(self, css_path: Path, config: Config, remote_katex: bool = False, disable_remote_content: bool = False):
         super().__init__()
+        self.config = config
         self.setWindowTitle("Markdown Editor with Preview")
         self.resize(800, 600)
 
@@ -254,15 +257,15 @@ class MainWindow(QMainWindow):
         self.dark_mode = False
 
         # Use args here
-        self.css_path = args.css
+        self.css_path = css_path
 
         # Create a QTabWidget
         self.tab_widget = QTabWidget()
         self.setCentralWidget(self.tab_widget)
 
         # Set local_katex and allow_remote_content options
-        self.local_katex = not args.remote_katex
-        self.allow_remote_content = not args.disable_remote_content
+        self.local_katex = not remote_katex
+        self.allow_remote_content = not disable_remote_content
 
         # Create the first tab
         self.new_tab()
@@ -327,10 +330,11 @@ class MainWindow(QMainWindow):
         # Create a new MarkdownEditor
         base_url = QUrl.fromLocalFile(os.path.join(os.getcwd() + os.path.sep))
         markdown_editor = MarkdownEditor(
-            css_dir=args.css,
+            config=self.config,
+            css_dir=self.css_path,
             base_url=base_url,
             local_katex=self.local_katex,
-            allow_remote_content=not args.disable_remote_content,
+            allow_remote_content=self.allow_remote_content,
             open_file_callback=self.open_file,  # Pass the open_file method as a callback
         )
 
@@ -842,8 +846,7 @@ class PreviewPage(QWebEnginePage):
                 return False  # Prevent the webview from navigating to the link
         return super().acceptNavigationRequest(url, type, isMainFrame)
 
-
-if __name__ == "__main__":
+def main():
     # Initialize configuration
     config = Config()
 
@@ -891,7 +894,7 @@ if __name__ == "__main__":
         args.css = Path(config.config.get("css_path")).resolve()
 
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(args.css,  config, args.remote_katex, args.disable_remote_content)
 
     if args.input_files:
         window.open_multiple_files(args.input_files)
@@ -907,6 +910,9 @@ if __name__ == "__main__":
     sys.exit(app.exec())
 
 
+
+if __name__ == "__main__":
+    main()
 # Footnotes
 # [^1]: https://facelessuser.github.io/pymdown-extensions/extensions/blocks/plugins/details/
 # [^2]: https://github.com/mkdocs/mkdocs/issues/282

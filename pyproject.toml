@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "pyqt6-markdown-preview"
+version = "0.1.0"
+description = "A Markdown Editor in PyQt6"
+authors = ["ryan <exogenesis@protonmail.com>"]
+license = "GPL"
+readme = "README.md"
+packages = [{include = "*", from="."}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+PyQt6 = "^6.7.1"
+"yaml-1.3" = "^0.1.0"
+markdown = "^3.7"
+typer = "^0.12.5"
+pygments = "^2.18.0"
+pymdown-extensions = "^10.11.2"
+pyxdg = "^0.28"
+markdown-gfm-admonition = "^0.1.1"
+tqdm = "^4.66.5"
+pyqt6-webengine = "^6.7.0"
+fuzzywuzzy = "^0.18.0"
+pyyaml = "^6.0.2"
+python-levenshtein = "^0.26.0"
+
+[tool.poetry.group.dev.dependencies]
+pyright = "^1.1.385"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.scripts]
+draftsmith-qt = "main:main"
