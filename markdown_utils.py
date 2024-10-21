@@ -1,5 +1,6 @@
 from PyQt6.QtCore import QUrl
 import markdown_gfm_admonition
+from markdown_extension_transclusion import IncludeFileExtension
 from markdown_extension_image_size_and_caption import ImageWithFigureExtension
 from PyQt6.QtWebEngineCore import QWebEngineSettings
 from PyQt6.QtWebEngineWidgets import QWebEngineView
@@ -71,6 +72,7 @@ class Markdown:
         html_body = markdown.markdown(
             text,
             extensions=[
+                IncludeFileExtension(base_path=os.getcwd()),
                 "attr_list",
                 ImageWithFigureExtension(),
                 # "markdown_captions",

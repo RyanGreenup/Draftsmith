@@ -99,6 +99,13 @@
         - Should they still open in the original window?
             - Or just outright disable?
 - Sync Scroll
+- Images
+  - AI Image Generation
+  - Image Annotation with LLava
+      - Add to Database as AI description
+  - Image Search
+      - Using Semantic Space
+          - Or Descriptions :shrug:
 
 
 ## Next
